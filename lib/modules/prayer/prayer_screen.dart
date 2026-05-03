@@ -20,7 +20,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Prayer Times")),
+      appBar: AppBar(title: const Text("Jadwal Sholat")),
       body: Consumer<PrayerProvider>(
         builder: (context, provider, child) {
           if (provider.isLoading) {

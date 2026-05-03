@@ -49,7 +49,7 @@ class DashboardScreen extends StatelessWidget {
                   _buildPrayerTimeCard(),
                   const SizedBox(height: 24),
                   const Text(
-                    "Main Features",
+                    "Fitur Utama",
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
@@ -70,7 +70,7 @@ class DashboardScreen extends StatelessWidget {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const DoaScreen()));
                       }),
                       _buildMenuCard(context, "Qibla", Icons.explore, Colors.red, () {}),
-                      _buildMenuCard(context, "Prayer Times", Icons.access_time, Colors.purple, () {
+                      _buildMenuCard(context, "Jadwal Sholat", Icons.access_time, Colors.purple, () {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const PrayerScreen()));
                       }),
                       _buildMenuCard(context, "Asmaul Husna", Icons.stars, Colors.amber, () {}),
@@ -107,7 +107,7 @@ class DashboardScreen extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text("Current Location", 
+                        const Text("Lokasi Saat Ini", 
                           style: TextStyle(color: Colors.white, fontSize: 16)),
                         Text(pt != null ? provider.formatTime(pt.fajr) : "--:--", 
                           style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
@@ -121,7 +121,7 @@ class DashboardScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(provider.locationName, style: const TextStyle(color: Colors.white)),
-                    const Text("Today", style: TextStyle(color: Colors.white)),
+                    const Text("Hari Ini", style: TextStyle(color: Colors.white)),
                   ],
                 )
               ],

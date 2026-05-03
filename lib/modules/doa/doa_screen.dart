@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:uas_projekk/core/theme.dart';
 
+import 'package:uas_projekk/modules/doa/doa_list_screen.dart';
+
 class DoaScreen extends StatelessWidget {
   const DoaScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final List<String> categories = [
-      "Daily Prayers",
-      "Morning & Evening",
-      "Travel",
-      "Food & Drink",
-      "Home & Family",
-      "Hajj & Umrah",
+      "Doa Harian",
+      "Pagi & Petang",
+      "Perjalanan",
+      "Makan & Minum",
+      "Rumah & Keluarga",
+      "Haji & Umrah",
     ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Daily Supplications (Doa)")),
+      appBar: AppBar(title: const Text("Kumpulan Doa Harian")),
       body: GridView.builder(
         padding: const EdgeInsets.all(16),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -27,8 +29,16 @@ class DoaScreen extends StatelessWidget {
         ),
         itemCount: categories.length,
         itemBuilder: (context, index) {
+          final category = categories[index];
           return InkWell(
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => DoaListScreen(category: category),
+                ),
+              );
+            },
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.white,
