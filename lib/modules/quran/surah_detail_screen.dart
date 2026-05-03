@@ -12,7 +12,7 @@ class SurahDetailScreen extends StatefulWidget {
 }
 
 class _SurahDetailScreenState extends State<SurahDetailScreen> {
-  Map<String, dynamic>? _detail;
+  List<dynamic>? _detail;
   bool _isLoading = true;
 
   @override
@@ -52,10 +52,10 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
               ? const Center(child: Text("Error loading surah"))
               : ListView.builder(
                   padding: const EdgeInsets.all(16),
-                  itemCount: _detail!['ayahs'].length,
+                  itemCount: _detail![0]['ayahs'].length,
                   itemBuilder: (context, index) {
-                    final ayah = _detail!['ayahs'][index];
-                    final translation = _detail!['editions'][1]['ayahs'][index];
+                    final ayah = _detail![0]['ayahs'][index];
+                    final translation = _detail![1]['ayahs'][index];
                     
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,

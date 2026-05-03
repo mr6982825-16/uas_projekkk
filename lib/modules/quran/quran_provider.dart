@@ -27,11 +27,11 @@ class QuranProvider with ChangeNotifier {
     }
   }
 
-  Future<Map<String, dynamic>?> fetchSurahDetail(int number) async {
+  Future<List<dynamic>?> fetchSurahDetail(int number) async {
     try {
       final response = await _dio.get("${AppConstants.quranBaseUrl}/surah/$number/editions/quran-uthmani,id.indonesian");
       if (response.statusCode == 200) {
-        return response.data['data'];
+        return response.data['data'] as List<dynamic>;
       }
     } catch (e) {
       debugPrint("Error fetching surah detail: $e");
