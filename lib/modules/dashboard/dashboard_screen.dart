@@ -4,6 +4,7 @@ import 'package:uas_projekk/modules/quran/quran_screen.dart';
 import 'package:uas_projekk/modules/prayer/prayer_screen.dart';
 import 'package:uas_projekk/modules/hadith/hadith_screen.dart';
 import 'package:uas_projekk/modules/doa/doa_screen.dart';
+import 'package:uas_projekk/modules/tools/asmaul_husna_screen.dart';
 import 'package:uas_projekk/modules/prayer/prayer_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -73,7 +74,9 @@ class DashboardScreen extends StatelessWidget {
                       _buildMenuCard(context, "Jadwal Sholat", Icons.access_time, Colors.purple, () {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const PrayerScreen()));
                       }),
-                      _buildMenuCard(context, "Asmaul Husna", Icons.stars, Colors.amber, () {}),
+                      _buildMenuCard(context, "Asmaul Husna", Icons.stars, Colors.amber, () {
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const AsmaulHusnaScreen()));
+                      }),
                     ],
                   ),
                 ],
@@ -107,9 +110,9 @@ class DashboardScreen extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text("Lokasi Saat Ini", 
-                          style: TextStyle(color: Colors.white, fontSize: 16)),
-                        Text(pt != null ? provider.formatTime(pt.fajr) : "--:--", 
+                        Text("Sholat Berikutnya: ${provider.nextPrayerName}", 
+                          style: const TextStyle(color: Colors.white, fontSize: 16)),
+                        Text(provider.nextPrayerTime != null ? provider.formatTime(provider.nextPrayerTime!) : "--:--", 
                           style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
                       ],
                     ),

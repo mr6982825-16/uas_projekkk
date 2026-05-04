@@ -12,6 +12,20 @@ class PrayerProvider with ChangeNotifier {
   String get locationName => _locationName;
   bool get isLoading => _isLoading;
 
+  String get nextPrayerName {
+    if (_prayerTimes == null) return "...";
+    final next = _prayerTimes!.nextPrayer();
+    if (next == Prayer.none) return "Fajr (Tomorrow)";
+    return next.name.toUpperCase();
+  }
+
+  DateTime? get nextPrayerTime {
+    if (_prayerTimes == null) return null;
+    final next = _prayerTimes!.nextPrayer();
+    if (next == Prayer.none) return _prayerTimes!.fajr;
+    return _prayerTimes!.timeForPrayer(next);
+  }
+
   Future<void> fetchPrayerTimes() async {
     _isLoading = true;
     notifyListeners();
@@ -32,13 +46,26 @@ class PrayerProvider with ChangeNotifier {
         }
       }
 
-      Position position = await Geolocator.getCurrentPosition();
-      final coordinates = Coordinates(position.latitude, position.longitude);
+      Position? position;
+      try {
+        position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.low,
+          timeLimit: const Duration(seconds: 5),
+        );
+      } catch (e) {
+        debugPrint("Location timeout or error, using fallback: $e");
+      }
+
+      // Default to Jakarta if position is null
+      final lat = position?.latitude ?? -6.2088;
+      final lon = position?.longitude ?? 106.8456;
+      final coordinates = Coordinates(lat, lon);
+      
       final params = CalculationMethod.muslim_world_league.getParameters();
       params.madhab = Madhab.shafi;
       
       _prayerTimes = PrayerTimes.today(coordinates, params);
-      _locationName = "Current Location"; // In real app, use geocoding
+      _locationName = position != null ? "Current Location" : "Jakarta (Default)";
     } catch (e) {
       debugPrint("Error calculating prayer times: $e");
     } finally {
