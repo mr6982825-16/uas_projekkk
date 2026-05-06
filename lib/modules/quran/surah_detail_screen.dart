@@ -96,10 +96,9 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                           ayah['text'],
                           textAlign: TextAlign.right,
                           style: const TextStyle(
-                            fontSize: 24,
+                            fontSize: 18,
                             fontFamily: 'Amiri',
-                            height: 2,
-                            fontWeight: FontWeight.bold,
+                            height: 1.8,
                           ),
                         ),
                         const SizedBox(height: 12),
