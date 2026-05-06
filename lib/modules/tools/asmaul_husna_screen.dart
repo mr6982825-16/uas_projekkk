@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:uas_projekk/core/theme.dart';
 
 class AsmaulHusnaScreen extends StatefulWidget {
@@ -41,39 +42,47 @@ class _AsmaulHusnaScreenState extends State<AsmaulHusnaScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : GridView.builder(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(12),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
-                childAspectRatio: 0.8,
+                crossAxisCount: 2,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 1.1,
               ),
               itemCount: _names.length,
               itemBuilder: (context, index) {
                 final n = _names[index];
                 return Card(
                   child: Padding(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(12),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
                           n['name'],
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'Amiri'),
+                          style: GoogleFonts.amiri(
+                            fontSize: 22, 
+                            fontWeight: FontWeight.bold, 
+                            height: 1.5
+                          ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 8),
                         Text(
                           n['transliteration'],
                           textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+                          style: GoogleFonts.inter(
+                            fontSize: 12, 
+                            fontWeight: FontWeight.bold, 
+                            color: AppTheme.primaryColor
+                          ),
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 4),
                         Text(
                           n['en']['meaning'],
                           textAlign: TextAlign.center,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 9, color: Colors.grey),
+                          style: GoogleFonts.inter(fontSize: 10, color: Colors.black45),
                         ),
                       ],
                     ),

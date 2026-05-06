@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uas_projekk/modules/quran/quran_provider.dart';
 import 'package:uas_projekk/core/theme.dart';
 
@@ -14,11 +16,25 @@ class SurahDetailScreen extends StatefulWidget {
 class _SurahDetailScreenState extends State<SurahDetailScreen> {
   List<dynamic>? _detail;
   bool _isLoading = true;
+  double _arabicFontSize = 28.0;
 
   @override
   void initState() {
     super.initState();
+    _loadSettings();
     _loadDetail();
+  }
+
+  Future<void> _loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _arabicFontSize = prefs.getDouble('arabic_font_size') ?? 28.0;
+    });
+  }
+
+  Future<void> _saveFontSize(double size) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('arabic_font_size', size);
   }
 
   Future<void> _loadDetail() async {
@@ -29,6 +45,51 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  void _showFontSizeDialog() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              padding: const EdgeInsets.all(24),
+              height: 200,
+              child: Column(
+                children: [
+                  Text("Sesuaikan Ukuran Teks", style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      const Icon(Icons.text_fields, size: 16),
+                      Expanded(
+                        child: Slider(
+                          value: _arabicFontSize,
+                          min: 18,
+                          max: 48,
+                          activeColor: AppTheme.primaryColor,
+                          onChanged: (value) {
+                            setModalState(() => _arabicFontSize = value);
+                            setState(() => _arabicFontSize = value);
+                            _saveFontSize(value);
+                          },
+                        ),
+                      ),
+                      const Icon(Icons.text_fields, size: 32),
+                    ],
+                  ),
+                  Text("${_arabicFontSize.toInt()} px"),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -45,11 +106,17 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.format_size),
+            onPressed: _showFontSizeDialog,
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _detail == null
-              ? const Center(child: Text("Error loading surah"))
+              ? const Center(child: Text("Gagal memuat surah"))
               : ListView.builder(
                   padding: const EdgeInsets.all(16),
                   itemCount: _detail![0]['ayahs'].length,
@@ -61,53 +128,82 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         if (index == 0 && widget.surah['number'] != 1 && widget.surah['number'] != 9)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 24),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 24),
                             child: Center(
                               child: Text(
                                 "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ",
-                                style: TextStyle(fontSize: 28, fontFamily: 'Amiri', fontWeight: FontWeight.bold),
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.amiri(
+                                  fontSize: _arabicFontSize + 4, 
+                                  height: 2.2,
+                                  fontWeight: FontWeight.bold
+                                ),
                               ),
                             ),
                           ),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryColor.withOpacity(0.05),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 14,
-                                backgroundColor: AppTheme.primaryColor,
-                                child: Text("${ayah['numberInSurah']}", 
-                                  style: const TextStyle(fontSize: 10, color: Colors.white)),
+                        Stack(
+                          children: [
+                            Align(
+                              alignment: Alignment.topLeft,
+                              child: CircleAvatar(
+                                radius: 16,
+                                backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                                child: Text(
+                                  "${ayah['numberInSurah']}", 
+                                  style: GoogleFonts.inter(
+                                    fontSize: 10, 
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.primaryColor
+                                  )
+                                ),
                               ),
-                              const Spacer(),
-                              const Icon(Icons.share, size: 20, color: AppTheme.primaryColor),
-                              const SizedBox(width: 16),
-                              const Icon(Icons.bookmark_border, size: 20, color: AppTheme.primaryColor),
-                            ],
-                          ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Text(
+                                    ayah['text'],
+                                    textAlign: TextAlign.right,
+                                    textDirection: TextDirection.rtl,
+                                    style: GoogleFonts.amiri(
+                                      fontSize: _arabicFontSize,
+                                      height: 2.2,
+                                      color: Colors.black.withOpacity(0.85),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    translation['text'],
+                                    textAlign: TextAlign.left,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 14, 
+                                      color: Colors.black54,
+                                      height: 1.5
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.share_outlined, size: 20, color: Colors.grey),
+                                        onPressed: () {},
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.bookmark_border, size: 20, color: Colors.grey),
+                                        onPressed: () {},
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          ayah['text'],
-                          textAlign: TextAlign.right,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontFamily: 'Amiri',
-                            height: 1.8,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          translation['text'],
-                          textAlign: TextAlign.left,
-                          style: const TextStyle(fontSize: 14, color: Colors.black87),
-                        ),
-                        const Divider(height: 48),
+                        const Divider(height: 40, thickness: 0.5),
                       ],
                     );
                   },

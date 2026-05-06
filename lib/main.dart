@@ -5,6 +5,7 @@ import 'package:uas_projekk/modules/dashboard/dashboard_screen.dart';
 import 'package:uas_projekk/modules/quran/quran_provider.dart';
 import 'package:uas_projekk/modules/prayer/prayer_provider.dart';
 import 'package:uas_projekk/modules/hadith/hadith_provider.dart';
+import 'package:uas_projekk/modules/doa/doa_provider.dart';
 
 void main() {
   runApp(
@@ -13,6 +14,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => QuranProvider()),
         ChangeNotifierProvider(create: (_) => PrayerProvider()),
         ChangeNotifierProvider(create: (_) => HadithProvider()),
+        ChangeNotifierProvider(create: (_) => DoaProvider()),
       ],
       child: const MyApp(),
     ),

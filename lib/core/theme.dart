@@ -3,10 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // Colors
-  static const Color primaryColor = Color(0xFF00695C); // Deep Emerald
+  static const Color primaryColor = Color(0xFF008080); // Teal
   static const Color secondaryColor = Color(0xFFC5A059); // Gold
   static const Color accentColor = Color(0xFFE0F2F1); // Light Mint
-  static const Color backgroundLight = Color(0xFFF5F5F5);
+  static const Color backgroundLight = Color(0xFFF9FAFB); // Off-white
   static const Color backgroundDark = Color(0xFF121212);
   static const Color surfaceDark = Color(0xFF1E1E1E);
 

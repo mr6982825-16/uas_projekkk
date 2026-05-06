@@ -3,7 +3,8 @@ class AppConstants {
   
   // APIs
   static const String quranBaseUrl = "https://api.alquran.cloud/v1";
-  static const String hadithBaseUrl = "https://hadis-api-id.vercel.app/hadith"; // Indonesian Hadith API
+  static const String hadithBaseUrl = "https://hadis-api-id.vercel.app/hadith"; 
+  static const String doaBaseUrl = "https://api.myquran.com/v2/doa/sumber/hisnulmuslim";
   
   // Storage Keys
   static const String keyLastReadSurah = "last_read_surah";

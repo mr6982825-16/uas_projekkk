@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:uas_projekk/modules/hadith/hadith_provider.dart';
 import 'package:uas_projekk/core/theme.dart';
@@ -37,6 +38,7 @@ class _HadithListScreenState extends State<HadithListScreen> {
                 prefixIcon: const Icon(Icons.search),
                 filled: true,
                 fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
               ),
             ),
@@ -66,28 +68,50 @@ class _HadithListScreenState extends State<HadithListScreen> {
               return Card(
                 margin: const EdgeInsets.only(bottom: 16),
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text("Number ${hadith['number']}", 
-                            style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
-                          const Icon(Icons.share, size: 20, color: AppTheme.primaryColor),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              "Nomor ${hadith['number']}", 
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold, 
+                                color: AppTheme.primaryColor
+                              )
+                            ),
+                          ),
+                          const Icon(Icons.share_outlined, size: 20, color: Colors.grey),
                         ],
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
                       Text(
                         hadith['arab'],
                         textAlign: TextAlign.right,
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, height: 1.8),
+                        textDirection: TextDirection.rtl,
+                        style: GoogleFonts.amiri(
+                          fontSize: 22, 
+                          fontWeight: FontWeight.bold, 
+                          height: 2.2
+                        ),
                       ),
                       const SizedBox(height: 16),
                       Text(
                         hadith['id'],
-                        style: const TextStyle(fontSize: 14, color: Colors.black87),
+                        style: GoogleFonts.inter(
+                          fontSize: 14, 
+                          color: Colors.black54,
+                          height: 1.5
+                        ),
                       ),
                     ],
                   ),
