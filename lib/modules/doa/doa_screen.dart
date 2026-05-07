@@ -6,6 +6,7 @@ import 'package:uas_projekk/modules/doa/doa_list_screen.dart';
 import 'package:uas_projekk/modules/doa/doa_provider.dart';
 import 'package:uas_projekk/modules/doa/dzikir_model.dart';
 import 'package:uas_projekk/modules/doa/dzikir_pagi_petang_screen.dart';
+import 'package:uas_projekk/modules/doa/sholat_sunnah_screen.dart';
 
 class DoaScreen extends StatefulWidget {
   const DoaScreen({super.key});
@@ -25,7 +26,7 @@ class _DoaScreenState extends State<DoaScreen> {
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>> categories = [
       {"name": "Pagi & Petang", "icon": Icons.wb_twilight, "color": Colors.orange},
-      {"name": "Sholat & Ibadah", "icon": Icons.mosque, "color": Colors.teal},
+      {"name": "Panduan Salat", "icon": Icons.mosque, "color": Colors.teal},
       {"name": "Makanan & Minuman", "icon": Icons.restaurant, "color": Colors.brown},
       {"name": "Kebahagiaan & Kesulitan", "icon": Icons.favorite, "color": Colors.indigo},
       {"name": "Sakit & Kematian", "icon": Icons.health_and_safety, "color": Colors.redAccent},
@@ -82,6 +83,13 @@ class _DoaScreenState extends State<DoaScreen> {
                             title: sessionTitle,
                             dzikirList: List<Dzikir>.from(dzikirList),
                           ),
+                        ),
+                      );
+                    } else if (cat['name'] == "Panduan Salat") {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const SholatSunnahScreen(),
                         ),
                       );
                     } else {
