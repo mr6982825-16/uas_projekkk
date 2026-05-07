@@ -4,18 +4,68 @@ import 'package:provider/provider.dart';
 import 'package:uas_projekk/core/theme.dart';
 import 'package:uas_projekk/modules/doa/doa_provider.dart';
 
-class DoaListScreen extends StatelessWidget {
+class DoaListScreen extends StatefulWidget {
   final String category;
   const DoaListScreen({super.key, required this.category});
+
+  @override
+  State<DoaListScreen> createState() => _DoaListScreenState();
+}
+
+class _DoaListScreenState extends State<DoaListScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = "";
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundLight,
-      appBar: AppBar(title: Text(category, style: GoogleFonts.inter())),
+      appBar: AppBar(
+        title: Text(widget.category, style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(60),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: "Cari doa...",
+                prefixIcon: const Icon(Icons.search),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: BorderSide.none
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
       body: Consumer<DoaProvider>(
         builder: (context, provider, child) {
-          final doas = provider.getDoasByCategory(category);
+          final allDoas = provider.getDoasByCategory(widget.category);
+          final doas = allDoas.where((d) {
+            final title = (d['judul'] ?? d['doa'] ?? "").toString().toLowerCase();
+            return title.contains(_searchQuery);
+          }).toList();
 
           if (doas.isEmpty) {
             return Center(

@@ -1,16 +1,91 @@
+import 'dart:async';
 import 'package:adhan/adhan.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PrayerProvider with ChangeNotifier {
   PrayerTimes? _prayerTimes;
   String _locationName = "Detecting...";
   bool _isLoading = false;
+  bool _isMuted = false;
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  Timer? _timer;
+  String? _lastPlayedMinute;
 
   PrayerTimes? get prayerTimes => _prayerTimes;
   String get locationName => _locationName;
   bool get isLoading => _isLoading;
+  bool get isMuted => _isMuted;
+
+  PrayerProvider() {
+    _loadMuteStatus();
+    _startMonitoring();
+  }
+
+  Future<void> _loadMuteStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    _isMuted = prefs.getBool('isMuted') ?? false;
+    notifyListeners();
+  }
+
+  Future<void> toggleMute() async {
+    _isMuted = !_isMuted;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isMuted', _isMuted);
+    if (_isMuted) {
+      _audioPlayer.stop();
+    }
+    notifyListeners();
+  }
+
+  void _startMonitoring() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _checkAdzan();
+    });
+  }
+
+  void _checkAdzan() {
+    if (_prayerTimes == null || _isMuted) return;
+
+    final now = DateTime.now();
+    final currentMinute = DateFormat('HH:mm').format(now);
+
+    // List of prayer times to check
+    final prayers = {
+      "Fajr": _prayerTimes!.fajr,
+      "Dhuhr": _prayerTimes!.dhuhr,
+      "Asr": _prayerTimes!.asr,
+      "Maghrib": _prayerTimes!.maghrib,
+      "Isha": _prayerTimes!.isha,
+    };
+
+    prayers.forEach((name, time) {
+      final prayerMinute = DateFormat('HH:mm').format(time.toLocal());
+      if (currentMinute == prayerMinute && _lastPlayedMinute != currentMinute) {
+        _playAdzan();
+        _lastPlayedMinute = currentMinute;
+      }
+    });
+  }
+
+  Future<void> _playAdzan() async {
+    try {
+      await _audioPlayer.play(AssetSource('audio/adzan.mp3'));
+    } catch (e) {
+      debugPrint("Error playing adzan: $e");
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _audioPlayer.dispose();
+    super.dispose();
+  }
 
   String get nextPrayerName {
     if (_prayerTimes == null) return "...";

@@ -22,6 +22,7 @@ dependencies:
   just_audio: ^0.9.36
   shared_preferences: ^2.2.2
   cached_network_image: ^3.3.0
+  audioplayers: ^5.2.1
 
 dev_dependencies:
   flutter_test:
@@ -36,3 +37,4 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/svg/
+    - assets/audio/
