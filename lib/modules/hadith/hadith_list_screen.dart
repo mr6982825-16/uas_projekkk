@@ -15,11 +15,25 @@ class HadithListScreen extends StatefulWidget {
 
 class _HadithListScreenState extends State<HadithListScreen> {
   String _searchQuery = "";
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     Future.microtask(() => context.read<HadithProvider>().fetchHadiths(widget.slug));
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      context.read<HadithProvider>().fetchMoreHadiths(widget.slug);
+    }
   }
 
   @override
@@ -52,8 +66,9 @@ class _HadithListScreenState extends State<HadithListScreen> {
           }
 
           final filteredHadiths = provider.hadiths.where((h) {
-            final text = "${h['id']} ${h['arab']}".toLowerCase();
-            return text.contains(_searchQuery);
+            final arabText = (h['arab'] ?? h['arabicText'] ?? "").toString().toLowerCase();
+            final translation = (h['id'] ?? h['translation'] ?? "").toString().toLowerCase();
+            return arabText.contains(_searchQuery) || translation.contains(_searchQuery);
           }).toList();
 
           if (filteredHadiths.isEmpty) {
@@ -61,10 +76,23 @@ class _HadithListScreenState extends State<HadithListScreen> {
           }
 
           return ListView.builder(
+            controller: _scrollController,
             padding: const EdgeInsets.all(16),
-            itemCount: filteredHadiths.length,
+            itemCount: filteredHadiths.length + (provider.hasMore ? 1 : 0),
             itemBuilder: (context, index) {
+              if (index == filteredHadiths.length) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+              }
+
               final hadith = filteredHadiths[index];
+              final arabic = hadith['arab'] ?? hadith['arabicText'] ?? "";
+              final translation = (hadith['id'] is String) ? hadith['id'] : (hadith['translation'] ?? "");
+
               return Card(
                 margin: const EdgeInsets.only(bottom: 16),
                 child: Padding(
@@ -95,7 +123,7 @@ class _HadithListScreenState extends State<HadithListScreen> {
                       ),
                       const SizedBox(height: 20),
                       Text(
-                        hadith['arab'],
+                        arabic,
                         textAlign: TextAlign.right,
                         textDirection: TextDirection.rtl,
                         style: GoogleFonts.amiri(
@@ -106,7 +134,7 @@ class _HadithListScreenState extends State<HadithListScreen> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        hadith['id'],
+                        translation,
                         style: GoogleFonts.inter(
                           fontSize: 14, 
                           color: Colors.black54,

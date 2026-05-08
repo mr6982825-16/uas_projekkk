@@ -9,7 +9,7 @@ class HadithScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<Map<String, String>> collections = [
-      {"name": "Bukhari", "total": "7008 Hadith", "slug": "bukhari"},
+      {"name": "Bukhari", "total": "7008 Hadith", "slug": "shahih-bukhari"},
       {"name": "Muslim", "total": "5362 Hadith", "slug": "muslim"},
       {"name": "Abu Daud", "total": "4419 Hadith", "slug": "abu-daud"},
       {"name": "Tirmidzi", "total": "3891 Hadith", "slug": "tirmidzi"},
