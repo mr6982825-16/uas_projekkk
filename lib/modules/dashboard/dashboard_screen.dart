@@ -3,6 +3,7 @@ import 'package:uas_projekk/modules/quran/quran_screen.dart';
 import 'package:uas_projekk/modules/dashboard/home_body.dart';
 import 'package:uas_projekk/modules/tools/features_dashboard_screen.dart';
 import 'package:uas_projekk/modules/prayer/prayer_screen.dart';
+import 'package:uas_projekk/modules/profile/profile_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -19,7 +20,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     const HomeBody(),
     const FeaturesDashboardScreen(),
     const PrayerTimesScreen(),
-    const Center(child: Text("Profile")),
+    const ProfileScreen(),
   ];
 
   @override

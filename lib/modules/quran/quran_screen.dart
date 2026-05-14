@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:uas_projekk/modules/profile/settings_provider.dart';
 import 'package:uas_projekk/modules/quran/quran_provider.dart';
 import 'package:uas_projekk/modules/quran/surah_detail_screen.dart';
 
@@ -20,27 +21,29 @@ class _QuranScreenState extends State<QuranScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
           "Al-Quran",
           style: GoogleFonts.inter(fontWeight: FontWeight.bold),
         ),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1B4332),
+        backgroundColor: theme.appBarTheme.backgroundColor,
+        foregroundColor: theme.appBarTheme.foregroundColor,
       ),
       body: Consumer<QuranProvider>(
         builder: (context, provider, child) {
           if (provider.isLoading && provider.surahs.isEmpty) {
-            return const Center(child: CircularProgressIndicator(color: Color(0xFF0F4D3A)));
+            return Center(child: CircularProgressIndicator(color: theme.primaryColor));
           }
 
           return ListView.separated(
             padding: const EdgeInsets.all(20),
             itemCount: provider.surahs.length,
-            separatorBuilder: (context, index) => const Divider(height: 1),
+            separatorBuilder: (context, index) => Divider(height: 1, color: theme.dividerColor),
             itemBuilder: (context, index) {
               final surah = provider.surahs[index];
               return ListTile(
@@ -51,13 +54,21 @@ class _QuranScreenState extends State<QuranScreen> {
                     const Icon(Icons.star_outline, color: Color(0xFF8B7355), size: 40),
                     Text(
                       surah.number.toString(),
-                      style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold),
+                      style: GoogleFonts.inter(
+                        fontSize: 12, 
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface
+                      ),
                     ),
                   ],
                 ),
                 title: Text(
                   surah.englishName,
-                  style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.bold, 
+                    fontSize: 16,
+                    color: theme.colorScheme.onSurface
+                  ),
                 ),
                 subtitle: Text(
                   "${surah.revelationType.toUpperCase()} • ${surah.numberOfAyahs} AYAT",
@@ -68,7 +79,7 @@ class _QuranScreenState extends State<QuranScreen> {
                   style: GoogleFonts.amiri(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF0F4D3A),
+                    color: theme.primaryColor,
                   ),
                 ),
                 onTap: () {

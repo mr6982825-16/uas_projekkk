@@ -1,47 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:uas_projekk/core/theme.dart';
 import 'package:uas_projekk/modules/quran/quran_screen.dart';
 import 'package:uas_projekk/modules/hadith/hadith_list_screen.dart';
 import 'package:uas_projekk/modules/doa/dzikir_pagi_petang_screen.dart';
 import 'package:uas_projekk/modules/doa/sholat_sunnah_screen.dart';
 import 'package:uas_projekk/modules/doa/dzikir_model.dart';
+import 'package:uas_projekk/modules/profile/settings_provider.dart';
 
 class FeaturesDashboardScreen extends StatelessWidget {
   const FeaturesDashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final settings = Provider.of<SettingsProvider>(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FBFB),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
         children: [
-          // Background Pattern (Same as home)
           Positioned.fill(
             child: CustomPaint(
-              painter: StarPatternPainter(),
+              painter: StarPatternPainter(color: settings.isDarkMode ? Colors.white10 : Colors.grey.withOpacity(0.04)),
             ),
           ),
-          
           SafeArea(
             child: Column(
               children: [
-                _buildFloatingAppBar(),
+                _buildFloatingAppBar(settings, theme),
                 Expanded(
                   child: SingleChildScrollView(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 20),
-                        _buildDailyReflectionCard(),
+                        _buildDailyReflectionCard(settings, theme),
                         const SizedBox(height: 30),
-                        _buildSectionHeader("Explore Sanctuary"),
+                        _buildSectionHeader("Explore Sanctuary", theme),
                         const SizedBox(height: 15),
-                        _buildFeaturesGrid(context),
+                        _buildFeaturesGrid(context, settings, theme),
                         const SizedBox(height: 30),
-                        _buildSectionHeader("Continue Reading", showViewAll: true),
+                        _buildSectionHeader("Continue Reading", theme, showViewAll: true),
                         const SizedBox(height: 15),
-                        _buildLastReadCard(),
+                        _buildLastReadCard(settings, theme),
                         const SizedBox(height: 25),
                         _buildWeeklyThemeBanner(),
                         const SizedBox(height: 100),
@@ -57,16 +60,16 @@ class FeaturesDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFloatingAppBar() {
+  Widget _buildFloatingAppBar(SettingsProvider settings, ThemeData theme) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(settings.isDarkMode ? 0.3 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           )
@@ -75,34 +78,34 @@ class FeaturesDashboardScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Icon(Icons.menu, color: Color(0xFF1B4332)),
+          Icon(Icons.menu, color: theme.primaryColor),
           Text(
             "Pilar Islam",
             style: GoogleFonts.inter(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: const Color(0xFF1B4332),
+              color: theme.primaryColor,
             ),
           ),
           CircleAvatar(
             radius: 18,
-            backgroundImage: const NetworkImage("https://i.pravatar.cc/150?u=pilarislam"),
+            backgroundImage: NetworkImage(settings.profilePicUrl),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDailyReflectionCard() {
+  Widget _buildDailyReflectionCard(SettingsProvider settings, ThemeData theme) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(25),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(settings.isDarkMode ? 0.2 : 0.04),
             blurRadius: 15,
             offset: const Offset(0, 8),
           )
@@ -132,7 +135,7 @@ class FeaturesDashboardScreen extends StatelessWidget {
                     style: GoogleFonts.inter(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF1B4332),
+                      color: theme.colorScheme.onSurface,
                     ),
                   ),
                 ],
@@ -140,7 +143,7 @@ class FeaturesDashboardScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: settings.isDarkMode ? Colors.white10 : Colors.grey[100],
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.calendar_today_outlined, size: 20, color: Color(0xFF8B7355)),
@@ -155,7 +158,7 @@ class FeaturesDashboardScreen extends StatelessWidget {
               style: GoogleFonts.amiri(
                 fontSize: 42,
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFF0F4D3A),
+                color: theme.primaryColor,
               ),
             ),
           ),
@@ -173,7 +176,7 @@ class FeaturesDashboardScreen extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     fontStyle: FontStyle.italic,
-                    color: Colors.grey[700],
+                    color: theme.colorScheme.onSurface.withOpacity(0.7),
                     height: 1.5,
                   ),
                 ),
@@ -200,7 +203,7 @@ class FeaturesDashboardScreen extends StatelessWidget {
                 style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Colors.white),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0F4D3A),
+                backgroundColor: theme.primaryColor,
                 padding: const EdgeInsets.symmetric(vertical: 15),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               ),
@@ -211,7 +214,7 @@ class FeaturesDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title, {bool showViewAll = false}) {
+  Widget _buildSectionHeader(String title, ThemeData theme, {bool showViewAll = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
@@ -222,7 +225,7 @@ class FeaturesDashboardScreen extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: const Color(0xFF1B4332),
+              color: theme.colorScheme.onBackground,
             ),
           ),
           if (showViewAll)
@@ -239,7 +242,7 @@ class FeaturesDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFeaturesGrid(BuildContext context) {
+  Widget _buildFeaturesGrid(BuildContext context, SettingsProvider settings, ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: GridView.count(
@@ -250,19 +253,19 @@ class FeaturesDashboardScreen extends StatelessWidget {
         crossAxisSpacing: 15,
         childAspectRatio: 1.3,
         children: [
-          _buildFeatureCard(Icons.menu_book_outlined, "Al-Quran", "The Noble Revelation", () {
+          _buildFeatureCard(Icons.menu_book_outlined, "Al-Quran", "The Noble Revelation", theme, settings, () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const QuranScreen()));
           }),
-          _buildFeatureCard(Icons.library_books_outlined, "Hadist", "Prophetic Wisdom", () {
+          _buildFeatureCard(Icons.library_books_outlined, "Hadist", "Prophetic Wisdom", theme, settings, () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const HadithListScreen()));
           }),
-          _buildFeatureCard(Icons.pan_tool_alt_outlined, "Doa Harian", "Daily Supplications", () {
+          _buildFeatureCard(Icons.pan_tool_alt_outlined, "Doa Harian", "Daily Supplications", theme, settings, () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => DzikirPagiPetangScreen(
               title: "Dzikir Pagi", 
               dzikirList: DzikirData.dzikirPagi
             )));
           }),
-          _buildFeatureCard(Icons.mosque_outlined, "Niat Salat", "Prayer Intentions", () {
+          _buildFeatureCard(Icons.mosque_outlined, "Niat Salat", "Prayer Intentions", theme, settings, () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const SholatSunnahScreen()));
           }),
         ],
@@ -270,18 +273,18 @@ class FeaturesDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatureCard(IconData icon, String title, String subtitle, VoidCallback onTap) {
+  Widget _buildFeatureCard(IconData icon, String title, String subtitle, ThemeData theme, SettingsProvider settings, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: Container(
         padding: const EdgeInsets.all(15),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
+              color: Colors.black.withOpacity(settings.isDarkMode ? 0.2 : 0.02),
               blurRadius: 10,
               offset: const Offset(0, 4),
             )
@@ -294,7 +297,7 @@ class FeaturesDashboardScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FBFB),
+                color: settings.isDarkMode ? Colors.white10 : const Color(0xFFF8FBFB),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, color: const Color(0xFF8B7355), size: 24),
@@ -302,7 +305,7 @@ class FeaturesDashboardScreen extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               title,
-              style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14),
+              style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14, color: theme.colorScheme.onSurface),
             ),
             const SizedBox(height: 2),
             Text(
@@ -315,16 +318,16 @@ class FeaturesDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLastReadCard() {
+  Widget _buildLastReadCard(SettingsProvider settings, ThemeData theme) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withOpacity(settings.isDarkMode ? 0.2 : 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           )
@@ -334,8 +337,8 @@ class FeaturesDashboardScreen extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: const BoxDecoration(
-              color: Color(0xFFFDF7E7),
+            decoration: BoxDecoration(
+              color: settings.isDarkMode ? Colors.white10 : const Color(0xFFFDF7E7),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.chrome_reader_mode_outlined, color: Color(0xFFC19E4A)),
@@ -356,7 +359,7 @@ class FeaturesDashboardScreen extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   "Surah Al-Kahf",
-                  style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14),
+                  style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14, color: theme.colorScheme.onSurface),
                 ),
                 Text(
                   "Ayah 24 of 110",
@@ -424,10 +427,13 @@ class FeaturesDashboardScreen extends StatelessWidget {
 }
 
 class StarPatternPainter extends CustomPainter {
+  final Color color;
+  StarPatternPainter({required this.color});
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.grey.withOpacity(0.04)
+      ..color = color
       ..strokeWidth = 1;
 
     const double spacing = 60;

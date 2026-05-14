@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:uas_projekk/modules/quran/quran_provider.dart';
+import 'package:uas_projekk/modules/profile/settings_provider.dart';
 
 class SurahDetailScreen extends StatefulWidget {
   final Surah surah;
@@ -20,18 +21,21 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = Provider.of<SettingsProvider>(context);
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(widget.surah.englishName, style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1B4332),
+        backgroundColor: theme.appBarTheme.backgroundColor,
+        foregroundColor: theme.appBarTheme.foregroundColor,
       ),
       body: Consumer<QuranProvider>(
         builder: (context, provider, child) {
           if (provider.isLoading) {
-            return const Center(child: CircularProgressIndicator(color: Color(0xFF0F4D3A)));
+            return Center(child: CircularProgressIndicator(color: theme.primaryColor));
           }
 
           return ListView.builder(
@@ -39,10 +43,10 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
             itemCount: provider.ayahs.length + 1,
             itemBuilder: (context, index) {
               if (index == 0) {
-                return _buildHeader();
+                return _buildHeader(settings);
               }
               final ayah = provider.ayahs[index - 1];
-              return _buildAyahItem(ayah);
+              return _buildAyahItem(ayah, settings, theme);
             },
           );
         },
@@ -50,7 +54,7 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(SettingsProvider settings) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(30),
@@ -82,21 +86,21 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
           const SizedBox(height: 20),
           Text(
             "بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ",
-            style: GoogleFonts.amiri(fontSize: 28, color: Colors.white),
+            style: GoogleFonts.amiri(fontSize: settings.arabicFontSize, color: Colors.white),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildAyahItem(Ayah ayah) {
+  Widget _buildAyahItem(Ayah ayah, SettingsProvider settings, ThemeData theme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
           decoration: BoxDecoration(
-            color: const Color(0xFFF8FBFB),
+            color: settings.isDarkMode ? Colors.white10 : const Color(0xFFF8FBFB),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
@@ -125,27 +129,33 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
             ayah.text,
             textAlign: TextAlign.right,
             style: GoogleFonts.amiri(
-              fontSize: 28,
+              fontSize: settings.arabicFontSize,
               height: 2.2,
               fontWeight: FontWeight.bold,
-              color: const Color(0xFF1B4332),
+              color: settings.isDarkMode ? const Color(0xFF4DB6AC) : const Color(0xFF1B4332),
             ),
           ),
         ),
-        const SizedBox(height: 15),
-        Text(
-          ayah.transliteration,
-          style: GoogleFonts.inter(
-            fontSize: 14,
-            fontStyle: FontStyle.italic,
-            color: const Color(0xFF8B7355),
+        if (settings.showTranslation) ...[
+          const SizedBox(height: 15),
+          Text(
+            ayah.transliteration,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontStyle: FontStyle.italic,
+              color: const Color(0xFF8B7355),
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          ayah.translation,
-          style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[700], height: 1.5),
-        ),
+          const SizedBox(height: 8),
+          Text(
+            ayah.translation,
+            style: GoogleFonts.inter(
+              fontSize: 14, 
+              color: settings.isDarkMode ? Colors.white70 : Colors.grey[700], 
+              height: 1.5
+            ),
+          ),
+        ],
         const SizedBox(height: 40),
       ],
     );
