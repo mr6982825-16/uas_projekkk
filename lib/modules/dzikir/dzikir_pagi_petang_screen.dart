@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:uas_projekk/core/theme.dart';
-import 'package:uas_projekk/modules/doa/dzikir_model.dart';
+import 'package:uas_projekk/modules/dzikir/dzikir_model.dart';
 
 class DzikirPagiPetangScreen extends StatefulWidget {
   final String title;

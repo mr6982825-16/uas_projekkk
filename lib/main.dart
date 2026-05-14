@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:uas_projekk/core/theme.dart';
 import 'package:uas_projekk/modules/dashboard/dashboard_screen.dart';
-import 'package:uas_projekk/modules/doa/doa_provider.dart';
+import 'package:uas_projekk/modules/dzikir/doa_provider.dart';
 import 'package:uas_projekk/modules/quran/quran_provider.dart';
 import 'package:uas_projekk/modules/hadith/hadith_provider.dart';
 import 'package:uas_projekk/modules/prayer/prayer_provider.dart';
 import 'package:uas_projekk/modules/profile/settings_provider.dart';
+import 'package:uas_projekk/modules/dzikir/doa_harian_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,6 +19,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => HadithProvider()),
         ChangeNotifierProvider(create: (_) => PrayerProvider()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        ChangeNotifierProvider(create: (_) => DoaHarianProvider()),
         // Add more providers here as modules are restored
       ],
       child: const MyApp(),

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:uas_projekk/core/theme.dart';
-import 'package:uas_projekk/modules/doa/dzikir_model.dart';
-import 'package:uas_projekk/modules/doa/niat_salat_model.dart';
+import 'package:uas_projekk/modules/dzikir/dzikir_model.dart';
+import 'package:uas_projekk/modules/dzikir/niat_salat_model.dart';
 import 'package:uas_projekk/modules/profile/settings_provider.dart';
 
 class HomeBody extends StatefulWidget {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:uas_projekk/core/theme.dart';
-import 'package:uas_projekk/modules/doa/sholat_sunnah_model.dart';
+import 'package:uas_projekk/modules/dzikir/sholat_sunnah_model.dart';
 
 class SholatSunnahScreen extends StatefulWidget {
   const SholatSunnahScreen({super.key});

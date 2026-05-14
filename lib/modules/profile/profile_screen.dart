@@ -1,15 +1,64 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uas_projekk/core/theme.dart';
 import 'package:uas_projekk/modules/profile/settings_provider.dart';
+import 'package:uas_projekk/modules/profile/about_screen.dart';
+import 'package:uas_projekk/modules/profile/feedback_screen.dart';
+import 'package:uas_projekk/modules/dzikir/doa_harian_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
+  Future<void> _launchUrl(String url) async {
+    if (!await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication)) {
+      throw Exception('Could not launch $url');
+    }
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text("Konfirmasi Logout", style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+        content: Text("Apakah Anda yakin ingin keluar dari akun Pilar Islam?", style: GoogleFonts.inter()),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("Batal", style: GoogleFonts.inter(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.clear(); // Clear all saved session data
+              
+              if (context.mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Anda telah keluar dari aplikasi.")),
+                );
+                // Usually navigate to login screen here
+                // Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => LoginScreen()), (route) => false);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red[700],
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: Text("Keluar", style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final settings = Provider.of<SettingsProvider>(context);
     
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -22,10 +71,10 @@ class ProfileScreen extends StatelessWidget {
               child: Column(
                 children: [
                   const SizedBox(height: 25),
-                  _buildStatsSection(theme),
+                  _buildStatsSection(theme, settings),
                   const SizedBox(height: 25),
                   _buildSectionHeader("Koleksi Saya", theme),
-                  _buildSavedContentSection(theme),
+                  _buildSavedContentSection(context, theme, settings),
                   const SizedBox(height: 25),
                   _buildSectionHeader("Pengaturan Ibadah", theme),
                   _buildPrayerSettingsSection(context, theme),
@@ -34,7 +83,7 @@ class ProfileScreen extends StatelessWidget {
                   _buildUISettingsSection(context, theme),
                   const SizedBox(height: 25),
                   _buildSectionHeader("Dukungan", theme),
-                  _buildSupportSection(theme),
+                  _buildSupportSection(context, theme),
                   const SizedBox(height: 100),
                 ],
               ),
@@ -204,7 +253,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsSection(ThemeData theme) {
+  Widget _buildStatsSection(ThemeData theme, SettingsProvider settings) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -219,9 +268,9 @@ class ProfileScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildStatItem("Doa Terbaca", "1,240", theme),
+              _buildStatItem("Doa Terbaca", settings.totalDoaRead.toString(), theme),
               Container(height: 30, width: 1, color: Colors.grey[200]),
-              _buildStatItem("Poin Ibadah", "850", theme),
+              _buildStatItem("Poin Ibadah", settings.userPoints.toString(), theme),
             ],
           ),
           const SizedBox(height: 20),
@@ -232,10 +281,10 @@ class ProfileScreen extends StatelessWidget {
             children: [
               Text(
                 "Target Harian",
-                style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold),
+                style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
               ),
               Text(
-                "75%",
+                "${(settings.dailyTarget * 100).toInt()}%",
                 style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF0F4D3A), fontWeight: FontWeight.bold),
               ),
             ],
@@ -243,11 +292,11 @@ class ProfileScreen extends StatelessWidget {
           const SizedBox(height: 10),
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: const LinearProgressIndicator(
-              value: 0.75,
+            child: LinearProgressIndicator(
+              value: settings.dailyTarget,
               minHeight: 10,
-              backgroundColor: Color(0xFFF1F1F1),
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0F4D3A)),
+              backgroundColor: theme.brightness == Brightness.dark ? Colors.white10 : const Color(0xFFF1F1F1),
+              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF0F4D3A)),
             ),
           ),
         ],
@@ -283,11 +332,34 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSavedContentSection(ThemeData theme) {
+  Widget _buildSavedContentSection(BuildContext context, ThemeData theme, SettingsProvider settings) {
     return Column(
       children: [
-        _buildSettingsTile(Icons.bookmark_outline, "Doa Favorit", theme, subtitle: "24 Doa tersimpan"),
-        _buildSettingsTile(Icons.history, "Terakhir Dibaca", theme, subtitle: "Surah Al-Kahf • Ayat 24"),
+        _buildSettingsTile(
+          Icons.bookmark_outline, 
+          "Doa Favorit", 
+          theme, 
+          subtitle: "${settings.favoriteDoaTitles.length} Doa tersimpan",
+          onTap: () {
+            Navigator.push(
+              context, 
+              MaterialPageRoute(builder: (_) => DoaHarianScreen(showFavoritesOnly: true))
+            );
+          },
+        ),
+        _buildSettingsTile(
+          Icons.history, 
+          "Terakhir Dibaca", 
+          theme, 
+          subtitle: "${settings.lastReadTitle} • ${settings.lastReadSubtitle}",
+          onTap: () {
+            // Simple logic: if it's a doa, open the collection.
+            Navigator.push(context, MaterialPageRoute(builder: (_) => DoaHarianScreen()));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Melanjutkan: ${settings.lastReadTitle}")),
+            );
+          },
+        ),
       ],
     );
   }
@@ -343,18 +415,39 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSupportSection(ThemeData theme) {
+  Widget _buildSupportSection(BuildContext context, ThemeData theme) {
     return Column(
       children: [
-        _buildSettingsTile(Icons.info_outline, "Tentang Pilar Islam", theme),
-        _buildSettingsTile(Icons.star_outline, "Beri Rating", theme),
-        _buildSettingsTile(Icons.mail_outline, "Hubungi Kami", theme),
-        _buildSettingsTile(Icons.logout, "Logout", theme, color: Colors.red[700]),
+        _buildSettingsTile(
+          Icons.info_outline, 
+          "Tentang Pilar Islam", 
+          theme,
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutScreen())),
+        ),
+        _buildSettingsTile(
+          Icons.star_outline, 
+          "Beri Rating", 
+          theme,
+          onTap: () => _launchUrl("https://play.google.com/store/apps/details?id=com.pilarislam.app"),
+        ),
+        _buildSettingsTile(
+          Icons.mail_outline, 
+          "Hubungi Kami", 
+          theme,
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FeedbackScreen())),
+        ),
+        _buildSettingsTile(
+          Icons.logout, 
+          "Logout", 
+          theme, 
+          color: Colors.red[700],
+          onTap: () => _showLogoutDialog(context),
+        ),
       ],
     );
   }
 
-  Widget _buildSettingsTile(IconData icon, String title, ThemeData theme, {String? subtitle, Widget? trailing, Color? color}) {
+  Widget _buildSettingsTile(IconData icon, String title, ThemeData theme, {String? subtitle, Widget? trailing, Color? color, VoidCallback? onTap}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
@@ -362,6 +455,7 @@ class ProfileScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: ListTile(
+        onTap: onTap,
         leading: Icon(icon, color: color ?? const Color(0xFF8B7355), size: 22),
         title: Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: color ?? theme.colorScheme.onSurface)),
         subtitle: subtitle != null ? Text(subtitle, style: GoogleFonts.inter(fontSize: 12, color: Colors.grey)) : null,

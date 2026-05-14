@@ -4,9 +4,10 @@ import 'package:provider/provider.dart';
 import 'package:uas_projekk/core/theme.dart';
 import 'package:uas_projekk/modules/quran/quran_screen.dart';
 import 'package:uas_projekk/modules/hadith/hadith_list_screen.dart';
-import 'package:uas_projekk/modules/doa/dzikir_pagi_petang_screen.dart';
-import 'package:uas_projekk/modules/doa/sholat_sunnah_screen.dart';
-import 'package:uas_projekk/modules/doa/dzikir_model.dart';
+import 'package:uas_projekk/modules/dzikir/dzikir_pagi_petang_screen.dart';
+import 'package:uas_projekk/modules/dzikir/sholat_sunnah_screen.dart';
+import 'package:uas_projekk/modules/dzikir/dzikir_model.dart';
+import 'package:uas_projekk/modules/dzikir/doa_harian_screen.dart';
 import 'package:uas_projekk/modules/profile/settings_provider.dart';
 
 class FeaturesDashboardScreen extends StatelessWidget {
@@ -258,6 +259,9 @@ class FeaturesDashboardScreen extends StatelessWidget {
           }),
           _buildFeatureCard(Icons.library_books_outlined, "Hadist", "Prophetic Wisdom", theme, settings, () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const HadithListScreen()));
+          }),
+          _buildFeatureCard(Icons.auto_stories_outlined, "Kumpulan Doa", "100+ Doa API", theme, settings, () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => DoaHarianScreen()));
           }),
           _buildFeatureCard(Icons.pan_tool_alt_outlined, "Doa Harian", "Daily Supplications", theme, settings, () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => DzikirPagiPetangScreen(
