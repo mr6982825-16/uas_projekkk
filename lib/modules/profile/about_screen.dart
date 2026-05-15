@@ -57,7 +57,7 @@ class AboutScreen extends StatelessWidget {
             const SizedBox(height: 25),
             _buildSection(
               "Tim Pengembang",
-              "Aplikasi ini dikembangkan oleh Ahmad Al-Farabi (lora M.rusdi) sebagai proyek tugas akhir (UAS) untuk mata kuliah Mobile Programming. Proyek ini berfokus pada integrasi API real-time dan pengalaman pengguna yang premium.",
+              "Aplikasi ini dikembangkan oleh M.rusdi mahasiswa universitas islam madura, alumni pondok pesantren miftahul ulum bettet pamekasan sebagai proyek tugas akhir (UAS) untuk mata kuliah Mobile Programming.",
             ),
             const SizedBox(height: 25),
             _buildSection(

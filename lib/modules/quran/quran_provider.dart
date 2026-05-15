@@ -35,20 +35,28 @@ class Ayah {
   final String text;
   final String translation;
   final String transliteration;
+  final String audioUrl;
 
   Ayah({
     required this.number,
     required this.text,
     required this.translation,
     required this.transliteration,
+    required this.audioUrl,
   });
 
   factory Ayah.fromJson(Map<String, dynamic> json) {
+    // Handling audio URLs from equran.id API v2
+    // v2 provides multiple reciters. We'll use the first one ('01').
+    Map<String, dynamic> audio = json['audio'] ?? {};
+    String audioUrl = audio['01'] ?? "";
+
     return Ayah(
       number: json['nomorAyat'],
       text: json['teksArab'],
       translation: json['teksIndonesia'],
       transliteration: json['teksLatin'],
+      audioUrl: audioUrl,
     );
   }
 }
@@ -64,6 +72,7 @@ class QuranProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   Future<void> fetchSurahs() async {
+    if (_surahs.isNotEmpty) return;
     _isLoading = true;
     notifyListeners();
 

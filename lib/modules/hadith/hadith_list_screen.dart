@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:uas_projekk/modules/hadith/hadith_provider.dart';
 import 'package:uas_projekk/modules/profile/settings_provider.dart';
 
@@ -249,11 +250,26 @@ class _HadithDetailListScreenState extends State<HadithDetailListScreen> {
                         const Spacer(),
                         IconButton(
                           icon: const Icon(Icons.share_outlined, size: 20, color: Colors.grey),
-                          onPressed: () {},
+                          onPressed: () {
+                            String shareText = "${hadith.arab}\n\n"
+                                "Artinya: ${hadith.contents}\n\n"
+                                "(${widget.book.name}, No. ${hadith.number})";
+                            Share.share(shareText);
+                          },
+                          tooltip: "Bagikan Hadist",
                         ),
                         IconButton(
-                          icon: const Icon(Icons.bookmark_outline, size: 20, color: Colors.grey),
-                          onPressed: () {},
+                          icon: Icon(
+                            settings.favoriteHadithKeys.contains("${widget.book.id}:${hadith.number}")
+                                ? Icons.bookmark
+                                : Icons.bookmark_outline,
+                            size: 20,
+                            color: settings.favoriteHadithKeys.contains("${widget.book.id}:${hadith.number}")
+                                ? const Color(0xFFD4AF37)
+                                : Colors.grey,
+                          ),
+                          onPressed: () => settings.toggleHadithFavorite(widget.book.id, hadith.number),
+                          tooltip: "Simpan Hadist",
                         ),
                       ],
                     ),

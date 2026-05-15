@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:uas_projekk/core/theme.dart';
 import 'package:uas_projekk/modules/quran/quran_screen.dart';
 import 'package:uas_projekk/modules/hadith/hadith_list_screen.dart';
@@ -197,7 +198,11 @@ class FeaturesDashboardScreen extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () {},
+              onPressed: () {
+                Share.share(
+                  "\"For indeed, with hardship [will be] ease.\"\n- Surah Al-Inshirah [94:5]\n\nShared from Pilar Islam App",
+                );
+              },
               icon: const Icon(Icons.share_outlined, size: 18, color: Colors.white),
               label: Text(
                 "Share Reflection",

@@ -74,13 +74,20 @@ class _QuranScreenState extends State<QuranScreen> {
                   "${surah.revelationType.toUpperCase()} • ${surah.numberOfAyahs} AYAT",
                   style: GoogleFonts.inter(fontSize: 12, color: Colors.grey),
                 ),
-                trailing: Text(
-                  surah.name,
-                  style: GoogleFonts.amiri(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: theme.primaryColor,
-                  ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      surah.name,
+                      style: GoogleFonts.amiri(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: theme.primaryColor,
+                      ),
+                    ),
+                    const SizedBox(width: 15),
+                    Icon(Icons.play_circle_outline, color: theme.primaryColor.withOpacity(0.5), size: 24),
+                  ],
                 ),
                 onTap: () {
                   Navigator.push(

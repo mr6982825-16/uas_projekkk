@@ -8,7 +8,7 @@ class SettingsProvider extends ChangeNotifier {
   bool _isAdhanNotifEnabled = true;
   bool _isDzikirNotifEnabled = true;
   
-  String _userName = "lora M.rusdi";
+  String _userName = "M.rusdi";
   String _profilePicUrl = "https://i.pravatar.cc/150?u=pilarislam";
 
   // Stats
@@ -18,6 +18,8 @@ class SettingsProvider extends ChangeNotifier {
   String _lastReadTitle = "Surah Al-Kahf";
   String _lastReadSubtitle = "Ayat 24 of 110";
   List<String> _favoriteDoaTitles = [];
+  List<String> _favoriteAyahKeys = [];
+  List<String> _favoriteHadithKeys = [];
 
   SettingsProvider() {
     _loadFromPrefs();
@@ -37,6 +39,8 @@ class SettingsProvider extends ChangeNotifier {
   String get lastReadTitle => _lastReadTitle;
   String get lastReadSubtitle => _lastReadSubtitle;
   List<String> get favoriteDoaTitles => _favoriteDoaTitles;
+  List<String> get favoriteAyahKeys => _favoriteAyahKeys;
+  List<String> get favoriteHadithKeys => _favoriteHadithKeys;
 
   // Persistance
   Future<void> _loadFromPrefs() async {
@@ -44,7 +48,7 @@ class SettingsProvider extends ChangeNotifier {
     _isDarkMode = prefs.getBool('isDarkMode') ?? false;
     _arabicFontSize = prefs.getDouble('arabicFontSize') ?? 28.0;
     _showTranslation = prefs.getBool('showTranslation') ?? true;
-    _userName = prefs.getString('userName') ?? "lora M.rusdi";
+    _userName = prefs.getString('userName') ?? "M.rusdi";
     _profilePicUrl = prefs.getString('profilePicUrl') ?? "https://i.pravatar.cc/150?u=pilarislam";
     _totalDoaRead = prefs.getInt('totalDoaRead') ?? 1240;
     _userPoints = prefs.getInt('userPoints') ?? 850;
@@ -52,6 +56,8 @@ class SettingsProvider extends ChangeNotifier {
     _lastReadTitle = prefs.getString('lastReadTitle') ?? "Surah Al-Kahf";
     _lastReadSubtitle = prefs.getString('lastReadSubtitle') ?? "Ayat 24 of 110";
     _favoriteDoaTitles = prefs.getStringList('favoriteDoaTitles') ?? [];
+    _favoriteAyahKeys = prefs.getStringList('favoriteAyahKeys') ?? [];
+    _favoriteHadithKeys = prefs.getStringList('favoriteHadithKeys') ?? [];
     notifyListeners();
   }
 
@@ -68,6 +74,8 @@ class SettingsProvider extends ChangeNotifier {
     await prefs.setString('lastReadTitle', _lastReadTitle);
     await prefs.setString('lastReadSubtitle', _lastReadSubtitle);
     await prefs.setStringList('favoriteDoaTitles', _favoriteDoaTitles);
+    await prefs.setStringList('favoriteAyahKeys', _favoriteAyahKeys);
+    await prefs.setStringList('favoriteHadithKeys', _favoriteHadithKeys);
   }
 
   void toggleDarkMode(bool value) {
@@ -130,6 +138,28 @@ class SettingsProvider extends ChangeNotifier {
       _favoriteDoaTitles.remove(title);
     } else {
       _favoriteDoaTitles.add(title);
+    }
+    _saveToPrefs();
+    notifyListeners();
+  }
+
+  void toggleAyahFavorite(int surahNumber, int ayahNumber) {
+    String key = "$surahNumber:$ayahNumber";
+    if (_favoriteAyahKeys.contains(key)) {
+      _favoriteAyahKeys.remove(key);
+    } else {
+      _favoriteAyahKeys.add(key);
+    }
+    _saveToPrefs();
+    notifyListeners();
+  }
+
+  void toggleHadithFavorite(String bookId, int hadithNumber) {
+    String key = "$bookId:$hadithNumber";
+    if (_favoriteHadithKeys.contains(key)) {
+      _favoriteHadithKeys.remove(key);
+    } else {
+      _favoriteHadithKeys.add(key);
     }
     _saveToPrefs();
     notifyListeners();

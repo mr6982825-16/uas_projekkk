@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:uas_projekk/modules/dzikir/doa_harian_provider.dart';
 import 'package:uas_projekk/modules/profile/settings_provider.dart';
 import 'package:uas_projekk/core/theme.dart';
@@ -159,6 +160,12 @@ class _DoaHarianScreenState extends State<DoaHarianScreen> {
                       color: theme.colorScheme.onSurface,
                     ),
                   ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.share_outlined, size: 20, color: Color(0xFF8B7355)),
+                  onPressed: () {
+                    Share.share("${doa.judul}\n\n${doa.arab}\n\nArtinya: ${doa.artinya}\n\nShared from Pilar Islam");
+                  },
                 ),
                 IconButton(
                   icon: Icon(
