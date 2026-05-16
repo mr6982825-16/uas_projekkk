@@ -2,18 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:provider/provider.dart';
 import 'package:uas_projekk/core/theme.dart';
 import 'package:uas_projekk/modules/dzikir/dzikir_model.dart';
+import 'package:uas_projekk/modules/dzikir/dzikir_provider.dart';
 
 class DzikirPagiPetangScreen extends StatefulWidget {
   final String title;
-  final List<Dzikir> dzikirList;
-
   const DzikirPagiPetangScreen({
     super.key,
     required this.title,
-    required this.dzikirList,
+    required this.dzikirList, // Still taking this for backward compatibility if needed, but we'll use provider
   });
+  
+  // ignore: unused_element
+  final List<Dzikir> dzikirList;
 
   @override
   State<DzikirPagiPetangScreen> createState() => _DzikirPagiPetangScreenState();
@@ -34,15 +37,20 @@ class _DzikirPagiPetangScreenState extends State<DzikirPagiPetangScreen> with Si
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    
     // Set initial tab based on title if possible
-    if (widget.title.contains("Petang")) {
+    if (widget.title.contains("Petang") || widget.title.contains("Sore")) {
       _tabController.index = 1;
     }
+    
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text.toLowerCase();
       });
     });
+
+    // Fetch data from API
+    Future.microtask(() => context.read<DzikirProvider>().fetchDzikirData());
   }
 
   @override
@@ -99,7 +107,7 @@ class _DzikirPagiPetangScreenState extends State<DzikirPagiPetangScreen> with Si
     return Scaffold(
       backgroundColor: AppTheme.backgroundLight,
       appBar: AppBar(
-        title: Text(widget.title, style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+        title: Text("Dzikir", style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             icon: Icon(_isPlaying ? Icons.stop_circle : Icons.play_circle_outline),
@@ -148,12 +156,20 @@ class _DzikirPagiPetangScreenState extends State<DzikirPagiPetangScreen> with Si
           ),
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildDzikirList(DzikirData.dzikirPagi),
-          _buildDzikirList(DzikirData.dzikirPetang),
-        ],
+      body: Consumer<DzikirProvider>(
+        builder: (context, provider, child) {
+          if (provider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          
+          return TabBarView(
+            controller: _tabController,
+            children: [
+              _buildDzikirList(provider.dzikirPagi.isEmpty ? DzikirData.dzikirPagi : provider.dzikirPagi),
+              _buildDzikirList(provider.dzikirPetang.isEmpty ? DzikirData.dzikirPetang : provider.dzikirPetang),
+            ],
+          );
+        },
       ),
     );
   }
@@ -203,15 +219,17 @@ class _DzikirPagiPetangScreenState extends State<DzikirPagiPetangScreen> with Si
                                 color: AppTheme.primaryColor,
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              dzikir.fadhilah,
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                color: Colors.blueGrey,
-                                fontStyle: FontStyle.italic,
+                            if (dzikir.fadhilah.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                dzikir.fadhilah,
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  color: Colors.blueGrey,
+                                  fontStyle: FontStyle.italic,
+                                ),
                               ),
-                            ),
+                            ],
                           ],
                         ),
                       ),
@@ -242,7 +260,7 @@ class _DzikirPagiPetangScreenState extends State<DzikirPagiPetangScreen> with Si
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  if (_showLatin) ...[
+                  if (_showLatin && dzikir.latin.isNotEmpty) ...[
                     const SizedBox(height: 16),
                     Text(
                       dzikir.latin,
@@ -253,7 +271,7 @@ class _DzikirPagiPetangScreenState extends State<DzikirPagiPetangScreen> with Si
                       ),
                     ),
                   ],
-                  if (_showTranslation) ...[
+                  if (_showTranslation && dzikir.terjemahan.isNotEmpty) ...[
                     const SizedBox(height: 12),
                     Text(
                       dzikir.terjemahan,

@@ -8,6 +8,7 @@ import 'package:uas_projekk/modules/hadith/hadith_provider.dart';
 import 'package:uas_projekk/modules/prayer/prayer_provider.dart';
 import 'package:uas_projekk/modules/profile/settings_provider.dart';
 import 'package:uas_projekk/modules/dzikir/doa_harian_provider.dart';
+import 'package:uas_projekk/modules/dzikir/dzikir_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,7 +21,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => PrayerProvider()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
         ChangeNotifierProvider(create: (_) => DoaHarianProvider()),
-        // Add more providers here as modules are restored
+        ChangeNotifierProvider(create: (_) => DzikirProvider()),
       ],
       child: const MyApp(),
     ),
