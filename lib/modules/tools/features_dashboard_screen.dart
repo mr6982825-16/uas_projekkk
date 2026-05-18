@@ -268,7 +268,7 @@ class FeaturesDashboardScreen extends StatelessWidget {
           _buildFeatureCard(Icons.auto_stories_outlined, "Kumpulan Doa", "100+ Doa API", theme, settings, () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => DoaHarianScreen()));
           }),
-          _buildFeatureCard(Icons.pan_tool_alt_outlined, "Doa Harian", "Daily Supplications", theme, settings, () {
+          _buildFeatureCard(Icons.pan_tool_alt_outlined, "Dzikir", "Daily Supplications", theme, settings, () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => DzikirPagiPetangScreen(
               title: "Dzikir Pagi", 
               dzikirList: DzikirData.dzikirPagi

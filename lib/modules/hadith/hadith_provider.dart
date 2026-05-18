@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
@@ -10,9 +11,9 @@ class HadithBook {
 
   factory HadithBook.fromJson(Map<String, dynamic> json) {
     return HadithBook(
-      name: json['name'],
-      id: json['id'],
-      available: json['available'],
+      name: json['name'] ?? '',
+      id: json['id'] ?? '',
+      available: int.tryParse(json['available'].toString()) ?? 0,
     );
   }
 }
@@ -26,7 +27,7 @@ class HadithItem {
 
   factory HadithItem.fromJson(Map<String, dynamic> json) {
     return HadithItem(
-      number: json['number'],
+      number: int.tryParse(json['number'].toString()) ?? 0,
       arab: json['arab'] ?? '',
       contents: json['id'] ?? '', 
     );
@@ -51,7 +52,8 @@ class HadithProvider extends ChangeNotifier {
 
   final List<String> _mirrors = [
     "https://api.hadith.gading.dev",
-    "https://hadith-api-ghazihan.vercel.app", // Fallback mirror
+    "https://hadith-api-ghazihan.vercel.app", 
+    "https://corsproxy.io/?https://api.hadith.gading.dev", // Fallback CORS proxy for Flutter Web
   ];
 
   Future<void> fetchBooks() async {
@@ -65,18 +67,25 @@ class HadithProvider extends ChangeNotifier {
       try {
         final response = await _dio.get("$baseUrl/books");
         if (response.statusCode == 200) {
-          final List data = response.data['data'];
+          var responseData = response.data;
+          
+          // Fix for Proxy returning String instead of JSON
+          if (responseData is String) {
+            responseData = jsonDecode(responseData);
+          }
+
+          final List data = responseData['data'];
           _books = data.map((json) => HadithBook.fromJson(json)).toList();
           _error = '';
           break; // Success
         }
       } catch (e) {
-        _error = "Gagal memuat daftar buku (Mirror: $baseUrl). Menghubungi mirror lain...";
+        _error = "Error: $e";
         debugPrint("Error fetching books from $baseUrl: $e");
       }
     }
 
-    if (_books.isEmpty && _error.isNotEmpty) {
+    if (_books.isEmpty && _error.isNotEmpty && !_error.contains("Timeout")) {
       _error = "Gagal menghubungkan ke server hadits. Periksa koneksi internet Anda.";
     }
     
@@ -95,14 +104,21 @@ class HadithProvider extends ChangeNotifier {
       try {
         final response = await _dio.get("$baseUrl/books/$bookId?range=1-$range");
         if (response.statusCode == 200) {
-          final List data = response.data['data']['hadiths'];
+          var responseData = response.data;
+          
+          // Fix for Proxy returning String instead of JSON
+          if (responseData is String) {
+            responseData = jsonDecode(responseData);
+          }
+
+          final List data = responseData['data']['hadiths'];
           _hadiths = data.map((json) => HadithItem.fromJson(json)).toList();
           success = true;
           _error = '';
           break;
         }
       } catch (e) {
-        _error = "Gagal memuat hadits (Mirror: $baseUrl).";
+        _error = "Error: $e";
         debugPrint("Error fetching hadiths from $baseUrl: $e");
       }
     }
