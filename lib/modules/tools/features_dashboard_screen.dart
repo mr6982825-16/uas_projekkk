@@ -10,7 +10,8 @@ import 'package:uas_projekk/modules/dzikir/sholat_sunnah_screen.dart';
 import 'package:uas_projekk/modules/dzikir/dzikir_model.dart';
 import 'package:uas_projekk/modules/dzikir/doa_harian_screen.dart';
 import 'package:uas_projekk/modules/profile/settings_provider.dart';
-
+import 'package:uas_projekk/features/debt_tracker/presentation/screens/debt_dashboard_screen.dart';
+import 'package:uas_projekk/features/faraid_calculator/presentation/screens/faraid_wizard_screen.dart';
 class FeaturesDashboardScreen extends StatelessWidget {
   const FeaturesDashboardScreen({super.key});
 
@@ -276,6 +277,12 @@ class FeaturesDashboardScreen extends StatelessWidget {
           }),
           _buildFeatureCard(Icons.mosque_outlined, "Niat Salat", "Prayer Intentions", theme, settings, () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const SholatSunnahScreen()));
+          }),
+          _buildFeatureCard(Icons.account_balance_wallet_outlined, "Utang Piutang", "Debt Tracker", theme, settings, () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const DebtDashboardScreen()));
+          }),
+          _buildFeatureCard(Icons.calculate_outlined, "Kalkulator Waris", "Faraid Smart System", theme, settings, () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const FaraidWizardScreen()));
           }),
         ],
       ),

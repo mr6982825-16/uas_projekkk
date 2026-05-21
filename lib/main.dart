@@ -10,8 +10,16 @@ import 'package:uas_projekk/modules/profile/settings_provider.dart';
 import 'package:uas_projekk/modules/dzikir/doa_harian_provider.dart';
 import 'package:uas_projekk/modules/dzikir/dzikir_provider.dart';
 
-void main() {
+import 'package:uas_projekk/features/debt_tracker/presentation/providers/debt_provider.dart';
+import 'package:uas_projekk/features/faraid_calculator/presentation/providers/faraid_provider.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Hive
+  await Hive.initFlutter();
+
   runApp(
     MultiProvider(
       providers: [
@@ -22,6 +30,12 @@ void main() {
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
         ChangeNotifierProvider(create: (_) => DoaHarianProvider()),
         ChangeNotifierProvider(create: (_) => DzikirProvider()),
+        ChangeNotifierProvider(create: (_) {
+          var provider = DebtProvider();
+          provider.init(); // Initialize Hive box loading
+          return provider;
+        }),
+        ChangeNotifierProvider(create: (_) => FaraidProvider()),
       ],
       child: const MyApp(),
     ),
