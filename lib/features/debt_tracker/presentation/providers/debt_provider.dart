@@ -5,7 +5,7 @@ import '../../data/models/debt_model.dart';
 class DebtProvider extends ChangeNotifier {
   static const String _boxName = 'debt_box';
   List<DebtModel> _debts = [];
-  bool _isLoading = false;
+  bool _isLoading = true;
 
   List<DebtModel> get debts => _debts;
   bool get isLoading => _isLoading;
@@ -23,9 +23,6 @@ class DebtProvider extends ChangeNotifier {
   }
 
   Future<void> init() async {
-    _isLoading = true;
-    notifyListeners();
-
     if (!Hive.isAdapterRegistered(0)) {
       Hive.registerAdapter(DebtModelAdapter());
     }

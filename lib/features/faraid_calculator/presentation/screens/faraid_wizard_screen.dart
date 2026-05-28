@@ -304,6 +304,28 @@ class _FaraidWizardScreenState extends State<FaraidWizardScreen> {
           provider.heirs.daughterCount = val;
           provider.updateHeirs(provider.heirs);
         }),
+
+        const Divider(height: 30),
+        
+        Text("Saudara (Logika Hijab)", style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16)),
+        const SizedBox(height: 5),
+        if (provider.heirs.sonCount > 0 || provider.heirs.isFatherAlive)
+          Container(
+            padding: const EdgeInsets.all(10),
+            margin: const EdgeInsets.only(top: 10, bottom: 10),
+            decoration: BoxDecoration(color: Colors.red.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+            child: Text("Mahjub (Terhalang): Saudara kandung tidak mendapat warisan karena ada Anak Laki-laki atau Ayah.", 
+              style: GoogleFonts.inter(color: Colors.red[700], fontSize: 12)
+            ),
+          ),
+        Opacity(
+          opacity: (provider.heirs.sonCount > 0 || provider.heirs.isFatherAlive) ? 0.4 : 1.0,
+          child: _buildCounter("Jumlah Saudara Kandung", provider.heirs.siblingCount, (val) {
+            if (provider.heirs.sonCount > 0 || provider.heirs.isFatherAlive) return; // Locked
+            provider.heirs.siblingCount = val;
+            provider.updateHeirs(provider.heirs);
+          }),
+        ),
       ],
     );
   }
@@ -361,8 +383,47 @@ class _FaraidWizardScreenState extends State<FaraidWizardScreen> {
       );
     });
 
+    double totalKotor = provider.assets.where((a) => a.value > 0).fold(0.0, (sum, a) => sum + a.value);
+    double totalUtang = provider.assets.where((a) => a.value < 0).fold(0.0, (sum, a) => sum + a.value).abs();
+
     return Column(
       children: [
+        // Summary Card
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(color: theme.primaryColor.withOpacity(0.3)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Ringkasan Harta", style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16)),
+              const SizedBox(height: 10),
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                Text("Harta Kotor:", style: GoogleFonts.inter(color: Colors.grey)),
+                Text(_currencyFormat.format(totalKotor), style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+              ]),
+              const SizedBox(height: 5),
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                Text("Dikurangi Utang:", style: GoogleFonts.inter(color: Colors.red)),
+                Text("- ${_currencyFormat.format(totalUtang)}", style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Colors.red)),
+              ]),
+              const Divider(height: 20),
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                Text("Harta Bersih (Dibagi):", style: GoogleFonts.inter(color: theme.primaryColor, fontWeight: FontWeight.bold)),
+                Text(_currencyFormat.format(provider.totalAssets), style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: theme.primaryColor, fontSize: 16)),
+              ]),
+            ],
+          ),
+        ),
+        const SizedBox(height: 30),
+        
+        Text("Porsi Pembagian", style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16)),
+        const SizedBox(height: 20),
+
         SizedBox(
           height: 200,
           child: PieChart(

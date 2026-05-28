@@ -5,7 +5,6 @@ import 'package:uas_projekk/core/theme.dart';
 import 'package:uas_projekk/modules/dzikir/dzikir_model.dart';
 import 'package:uas_projekk/modules/dzikir/niat_salat_model.dart';
 import 'package:uas_projekk/modules/profile/settings_provider.dart';
-
 class HomeBody extends StatefulWidget {
   const HomeBody({super.key});
 

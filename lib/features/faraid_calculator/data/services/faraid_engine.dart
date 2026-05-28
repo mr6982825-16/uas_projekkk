@@ -17,8 +17,15 @@ class FaraidEngine {
     } else if (heirs.isWifeAlive && heirs.wifeCount > 0) {
       double wifePortion = hasChildren ? 1 / 8 : 1 / 4;
       double amount = totalAssets * wifePortion;
-      // Jika lebih dari 1 istri, dibagi rata
-      results.add(HeirShare(name: "Istri", relation: "Istri (${heirs.wifeCount})", portion: wifePortion, amount: amount));
+      // Dibagi rata per istri
+      for (int i = 1; i <= heirs.wifeCount; i++) {
+        results.add(HeirShare(
+          name: heirs.wifeCount > 1 ? "Istri ke-$i" : "Istri", 
+          relation: "Istri", 
+          portion: wifePortion / heirs.wifeCount, 
+          amount: amount / heirs.wifeCount
+        ));
+      }
       remainingAssets -= amount;
     }
 
@@ -27,11 +34,7 @@ class FaraidEngine {
       double fatherPortion = 0;
       if (hasChildren) {
         fatherPortion = 1 / 6;
-      } else {
-        // Jika tidak ada anak, ayah mengambil Ashabah (Sisa). Kita tangani nanti di akhir
-        // Namun sebagai Dzawil Furudh, beliau juga bisa mendapat 1/6 + sisa jika hanya ada anak perempuan
       }
-      
       if (fatherPortion > 0) {
         double amount = totalAssets * fatherPortion;
         results.add(HeirShare(name: "Ayah", relation: "Ayah", portion: fatherPortion, amount: amount));
@@ -50,9 +53,18 @@ class FaraidEngine {
     // 4. Hitung Anak Perempuan (jika tidak ada anak laki-laki)
     if (heirs.daughterCount > 0 && heirs.sonCount == 0) {
       double daughterPortion = heirs.daughterCount == 1 ? 1 / 2 : 2 / 3;
-      double amount = totalAssets * daughterPortion;
-      results.add(HeirShare(name: "Anak Perempuan", relation: "Anak Pr (${heirs.daughterCount})", portion: daughterPortion, amount: amount));
-      remainingAssets -= amount;
+      double totalAmount = totalAssets * daughterPortion;
+      
+      // Dibagi rata per anak perempuan
+      for (int i = 1; i <= heirs.daughterCount; i++) {
+        results.add(HeirShare(
+          name: heirs.daughterCount > 1 ? "Anak Perempuan ke-$i" : "Anak Perempuan", 
+          relation: "Anak Pr", 
+          portion: daughterPortion / heirs.daughterCount, 
+          amount: totalAmount / heirs.daughterCount
+        ));
+      }
+      remainingAssets -= totalAmount;
       
       // Jika Ayah masih hidup dan hanya ada anak perempuan, ayah dapat tambahan sisa (Ashabah)
       if (heirs.isFatherAlive && remainingAssets > 0) {
@@ -68,18 +80,55 @@ class FaraidEngine {
       double sharePerUnit = remainingAssets / totalShares;
       
       if (heirs.sonCount > 0) {
-        double sonAmount = sharePerUnit * 2 * heirs.sonCount;
-        results.add(HeirShare(name: "Anak Laki-Laki", relation: "Anak Lk (${heirs.sonCount})", portion: sonAmount / totalAssets, amount: sonAmount));
+        double sonAmountPerPerson = sharePerUnit * 2;
+        for (int i = 1; i <= heirs.sonCount; i++) {
+          results.add(HeirShare(
+            name: heirs.sonCount > 1 ? "Anak Laki-Laki ke-$i" : "Anak Laki-Laki", 
+            relation: "Anak Lk", 
+            portion: sonAmountPerPerson / totalAssets, 
+            amount: sonAmountPerPerson
+          ));
+        }
       }
       
       if (heirs.daughterCount > 0) {
-        double daughterAmount = sharePerUnit * heirs.daughterCount;
-        results.add(HeirShare(name: "Anak Perempuan", relation: "Anak Pr (${heirs.daughterCount})", portion: daughterAmount / totalAssets, amount: daughterAmount));
+        double daughterAmountPerPerson = sharePerUnit;
+        for (int i = 1; i <= heirs.daughterCount; i++) {
+          results.add(HeirShare(
+            name: heirs.daughterCount > 1 ? "Anak Perempuan ke-$i" : "Anak Perempuan", 
+            relation: "Anak Pr", 
+            portion: daughterAmountPerPerson / totalAssets, 
+            amount: daughterAmountPerPerson
+          ));
+        }
       }
       remainingAssets = 0;
     } else if (heirs.isFatherAlive && remainingAssets > 0 && !hasChildren) {
       // Ayah sebagai Ashabah murni karena tidak ada keturunan
       results.add(HeirShare(name: "Ayah (Ashabah)", relation: "Ayah", portion: remainingAssets / totalAssets, amount: remainingAssets));
+      remainingAssets = 0;
+    } else if (heirs.siblingCount > 0 && remainingAssets > 0) {
+      // Logika Hijab: Saudara mendapat sisa HANYA jika TIDAK ADA Anak Laki-Laki dan TIDAK ADA Ayah.
+      double sharePerUnit = remainingAssets / heirs.siblingCount;
+      for (int i = 1; i <= heirs.siblingCount; i++) {
+        results.add(HeirShare(
+          name: heirs.siblingCount > 1 ? "Saudara Kandung ke-$i" : "Saudara Kandung", 
+          relation: "Saudara", 
+          portion: sharePerUnit / totalAssets, 
+          amount: sharePerUnit
+        ));
+      }
+      remainingAssets = 0;
+    }
+
+    // 6. Radd / Baitul Mal (Jika masih ada sisa harta dan tidak ada ashabah)
+    if (remainingAssets > 0.01) { // 0.01 for floating point precision safety
+      results.add(HeirShare(
+        name: "Sisa Harta (Radd/Baitul Mal)", 
+        relation: "Dikembalikan / Disumbangkan", 
+        portion: remainingAssets / totalAssets, 
+        amount: remainingAssets
+      ));
       remainingAssets = 0;
     }
 

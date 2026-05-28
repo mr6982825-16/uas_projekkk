@@ -19,6 +19,7 @@ class HeirModel {
   int daughterCount;
   bool isFatherAlive;
   bool isMotherAlive;
+  int siblingCount; // Ditambahkan untuk logika Hijab
 
   HeirModel({
     this.isHusbandAlive = false,
@@ -28,6 +29,7 @@ class HeirModel {
     this.daughterCount = 0,
     this.isFatherAlive = false,
     this.isMotherAlive = false,
+    this.siblingCount = 0,
   });
 
   // Reset state
@@ -39,6 +41,7 @@ class HeirModel {
     daughterCount = 0;
     isFatherAlive = false;
     isMotherAlive = false;
+    siblingCount = 0;
   }
 }
 
