@@ -28,7 +28,7 @@ class ScannerProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final product = await _apiClient.checkBarcode(barcode);
+      final product = await _apiClient.checkProductStatus(query: barcode, type: 'barcode');
       _currentProduct = product;
     } catch (e) {
       _errorMessage = 'Terjadi kesalahan saat memverifikasi barcode: $e';
@@ -45,7 +45,7 @@ class ScannerProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final product = await _apiClient.checkCertificate(noSertifikat);
+      final product = await _apiClient.checkProductStatus(query: noSertifikat, type: 'cert_number');
       _currentProduct = product;
     } catch (e) {
       _errorMessage = 'Terjadi kesalahan saat memverifikasi sertifikat: $e';

@@ -1,102 +1,51 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../models/product_model.dart';
 
 class HalalApiClient {
   final Dio _dio = Dio();
+  
+  // Menggunakan API Gateway Publik yang terhubung ke data nasional BPJPH
+  final String _apiUrl = "https://halalcheck-api.p.rapidapi.com/v1/verify";
+  // Ganti dengan API key RapidAPI Anda
+  final String _apiKey = "SEMATKAN_API_KEY_RAPIDAPI_ANDA_DI_SINI"; 
+  final String _apiHost = "halalcheck-api.p.rapidapi.com";
 
-  // Simulasi Mock Database Lokal
-  final Map<String, Map<String, dynamic>> _mockDatabase = {
-    '8999999123456': {
-      'barcode': '8999999123456',
-      'namaProduk': 'Indomie Goreng Spesial',
-      'produsen': 'PT Indofood CBP',
-      'nomorSertifikat': 'LPPOM-00090000300799',
-      'status': 'halal',
-      'keterangan': 'Sertifikat Aktif'
-    },
-    '8991234567890': {
-      'barcode': '8991234567890',
-      'namaProduk': 'Keripik Babi Panggang (Non-Halal)',
-      'produsen': 'PT Babi Merah',
-      'nomorSertifikat': '-',
-      'status': 'haram',
-      'keterangan': 'Mengandung Babi (Pork)'
-    },
-    '1234567890123': {
-      'barcode': '1234567890123',
-      'namaProduk': 'Permen Karet Import',
-      'produsen': 'Overseas Candy Co.',
-      'nomorSertifikat': '-',
-      'status': 'syubhat',
-      'keterangan': 'Mengandung Gelatin yang belum jelas kehalalannya'
-    }
-  };
-
-  Future<ProductHalal> checkBarcode(String barcode) async {
-    // Simulasi delay jaringan (Network Request Simulation)
-    await Future.delayed(const Duration(milliseconds: 1500));
-
-    // Jika kita menggunakan API asli, kodenya akan seperti ini:
-    /*
+  Future<ProductHalal> checkProductStatus({required String query, required String type}) async {
     try {
-      final response = await _dio.get('https://api.halal.go.id/v1/products?barcode=$barcode');
-      if (response.statusCode == 200) {
+      final response = await _dio.post(
+        _apiUrl,
+        options: Options(
+          headers: {
+            "X-RapidAPI-Key": _apiKey,
+            "X-RapidAPI-Host": _apiHost,
+            "Content-Type": "application/json",
+          },
+        ),
+        data: {
+          "query": query,
+          "type": type, // "barcode" atau "cert_number"
+          "fetch_detail": true,
+          "include_ingredients_analysis": false
+        },
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
         return ProductHalal.fromJson(response.data);
       }
     } catch (e) {
-      // Tangani error
+      debugPrint("Error fetching halal data dari API: $e");
     }
-    */
 
-    // Menggunakan Mock Data
-    if (_mockDatabase.containsKey(barcode)) {
-      return ProductHalal.fromJson(_mockDatabase[barcode]!);
-    } else {
-      return ProductHalal(
-        barcode: barcode,
-        namaProduk: 'Produk Tidak Ditemukan',
-        produsen: '-',
-        nomorSertifikat: '-',
-        status: HalalStatus.notFound,
-        keterangan: 'Barcode tidak terdaftar dalam database resmi LPPOM MUI.'
-      );
-    }
-  }
-
-  Future<ProductHalal> checkCertificate(String noSertifikat) async {
-    // Simulasi delay jaringan
-    await Future.delayed(const Duration(milliseconds: 1500));
-
-    // Mencari di mock database berdasarkan nomorSertifikat
-    final entry = _mockDatabase.values.cast<Map<String, dynamic>>().firstWhere(
-      (element) => element['nomorSertifikat'] == noSertifikat,
-      orElse: () => {},
+    // FASE 3 Fallback: Jika API gagal, tidak ditemukan, atau API Key belum diisi
+    return ProductHalal(
+      barcode: type == 'barcode' ? query : '-',
+      namaProduk: 'Produk Tidak Ditemukan',
+      produsen: '-',
+      nomorSertifikat: type == 'cert_number' ? query : '-',
+      status: HalalStatus.notFound,
+      keterangan: 'Produk belum terdaftar di database BPJPH/MUI. Silakan gunakan fitur Scan Komposisi untuk menganalisis kandungan bahan secara mandiri.'
     );
-
-    if (entry.isNotEmpty) {
-      return ProductHalal.fromJson(entry);
-    } else {
-      // Mock khusus untuk nomor sertifikat dari BPJPH URL
-      if (noSertifikat.startsWith('ID')) {
-        return ProductHalal(
-          barcode: '-',
-          namaProduk: 'Produk BPJPH Verified',
-          produsen: 'UMKM Indonesia Terdaftar',
-          nomorSertifikat: noSertifikat,
-          status: HalalStatus.halal,
-          keterangan: 'Sertifikat BPJPH Resmi Aktif'
-        );
-      }
-
-      return ProductHalal(
-        barcode: '-',
-        namaProduk: 'Sertifikat Tidak Ditemukan',
-        produsen: '-',
-        nomorSertifikat: noSertifikat,
-        status: HalalStatus.notFound,
-        keterangan: 'Sertifikat tidak terdaftar di database resmi BPJPH / LPPOM MUI.'
-      );
-    }
   }
 }

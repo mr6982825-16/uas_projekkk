@@ -39,15 +39,39 @@ class _ScannerScreenState extends State<ScannerScreen> {
           _isProcessing = true;
         });
 
-        // Hentikan sementara kamera saat memproses
-        _controller.stop();
-
         final String scannedCode = barcode.rawValue!;
         
         // Panggil provider untuk verifikasi API mock
         final provider = Provider.of<ScannerProvider>(context, listen: false);
-        // Fire & forget pemanggilan API
-        provider.scanBarcode(scannedCode);
+
+        // 1. Cek apakah hasil scan merupakan URL resmi sertifikat halal BPJPH
+        if (scannedCode.contains('bpjph.halal.go.id') && scannedCode.contains('NoSertifikat')) {
+          String? noSertifikat;
+          
+          try {
+            Uri uri = Uri.parse(scannedCode);
+            noSertifikat = uri.queryParameters['filter[NoSertifikat]'];
+          } catch (e) {
+            // Abaikan jika gagal parse URI
+          }
+
+          // Fallback menggunakan Regex jika URI parse gagal
+          if (noSertifikat == null || noSertifikat.isEmpty) {
+            RegExp regExp = RegExp(r'NoSertifikat\]?=([A-Z0-9]+)');
+            Match? match = regExp.firstMatch(scannedCode);
+            if (match != null) {
+              noSertifikat = match.group(1);
+            }
+          }
+
+          if (noSertifikat != null && noSertifikat.isNotEmpty) {
+            provider.scanCertificate(noSertifikat);
+          } else {
+            provider.scanBarcode(scannedCode);
+          }
+        } else {
+          provider.scanBarcode(scannedCode);
+        }
 
         // Munculkan Bottom Sheet
         if (mounted) {
@@ -59,12 +83,13 @@ class _ScannerScreenState extends State<ScannerScreen> {
           );
         }
 
-        // Setelah Bottom Sheet ditutup, lanjutkan pemindaian
+        // Setelah Bottom Sheet ditutup, izinkan pemindaian lagi
         if (mounted) {
+          // Beri sedikit jeda agar tidak langsung scan barcode yang sama saat ditutup
+          await Future.delayed(const Duration(milliseconds: 500));
           setState(() {
             _isProcessing = false;
           });
-          _controller.start(); // Lanjut scan
         }
       }
     }
