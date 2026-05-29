@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:provider/provider.dart';
 import 'package:uas_projekk/core/theme.dart';
+import '../providers/scanner_provider.dart';
+import '../widgets/result_bottom_sheet.dart';
 
 class ScannerScreen extends StatefulWidget {
   const ScannerScreen({super.key});
@@ -41,14 +44,22 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
         final String scannedCode = barcode.rawValue!;
         
-        // Nanti akan memanggil fungsi BottomSheet API di sini (Sprint 2)
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Barcode terdeteksi: $scannedCode\n(Integrasi API menyusul)')),
-        );
+        // Panggil provider untuk verifikasi API mock
+        final provider = Provider.of<ScannerProvider>(context, listen: false);
+        // Fire & forget pemanggilan API
+        provider.scanBarcode(scannedCode);
 
-        // Simulasi proses
-        await Future.delayed(const Duration(seconds: 2));
+        // Munculkan Bottom Sheet
+        if (mounted) {
+          await showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (context) => const ResultBottomSheet(),
+          );
+        }
 
+        // Setelah Bottom Sheet ditutup, lanjutkan pemindaian
         if (mounted) {
           setState(() {
             _isProcessing = false;
@@ -74,14 +85,17 @@ class _ScannerScreenState extends State<ScannerScreen> {
         actions: [
           IconButton(
             color: Colors.white,
-            icon: ValueListenableBuilder(
-              valueListenable: _controller.torchState,
+            icon: ValueListenableBuilder<MobileScannerState>(
+              valueListenable: _controller,
               builder: (context, state, child) {
-                switch (state) {
+                switch (state.torchState) {
                   case TorchState.off:
                     return const Icon(Icons.flash_off, color: Colors.grey);
                   case TorchState.on:
                     return const Icon(Icons.flash_on, color: Colors.yellow);
+                  case TorchState.auto:
+                  case TorchState.unavailable:
+                    return const Icon(Icons.flash_off, color: Colors.grey);
                 }
               },
             ),
@@ -90,14 +104,16 @@ class _ScannerScreenState extends State<ScannerScreen> {
           ),
           IconButton(
             color: Colors.white,
-            icon: ValueListenableBuilder(
-              valueListenable: _controller.cameraFacingState,
+            icon: ValueListenableBuilder<MobileScannerState>(
+              valueListenable: _controller,
               builder: (context, state, child) {
-                switch (state) {
+                switch (state.cameraDirection) {
                   case CameraFacing.front:
                     return const Icon(Icons.camera_front);
                   case CameraFacing.back:
                     return const Icon(Icons.camera_rear);
+                  default: // Menangani CameraFacing.external atau nilai baru lainnya
+                    return const Icon(Icons.camera);
                 }
               },
             ),
@@ -111,6 +127,30 @@ class _ScannerScreenState extends State<ScannerScreen> {
           MobileScanner(
             controller: _controller,
             onDetect: _onDetect,
+            errorBuilder: (context, error) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.videocam_off, color: Colors.red, size: 60),
+                      const SizedBox(height: 20),
+                      Text(
+                        "Kamera Tidak Tersedia",
+                        style: GoogleFonts.inter(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        "Kamera sedang digunakan oleh aplikasi/tab lain (seperti Zoom, GMeet, atau tab Edge lainnya). Silakan tutup aplikasi tersebut lalu muat ulang halaman ini.",
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(color: Colors.white70, fontSize: 14),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
           // Scanner Overlay
           Center(

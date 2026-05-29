@@ -12,6 +12,7 @@ import 'package:uas_projekk/modules/dzikir/dzikir_provider.dart';
 
 import 'package:uas_projekk/features/debt_tracker/presentation/providers/debt_provider.dart';
 import 'package:uas_projekk/features/faraid_calculator/presentation/providers/faraid_provider.dart';
+import 'package:uas_projekk/features/halal_scanner/presentation/providers/scanner_provider.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 void main() async {
@@ -36,6 +37,7 @@ void main() async {
           return provider;
         }),
         ChangeNotifierProvider(create: (_) => FaraidProvider()),
+        ChangeNotifierProvider(create: (_) => ScannerProvider()),
       ],
       child: const MyApp(),
     ),
