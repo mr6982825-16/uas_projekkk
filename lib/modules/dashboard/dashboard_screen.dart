@@ -13,10 +13,9 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  int _selectedIndex = 1;
+  int _selectedIndex = 0;
 
   final List<Widget> _pages = [
-    const QuranScreen(),
     const HomeBody(),
     const FeaturesDashboardScreen(),
     const PrayerTimesScreen(),
@@ -60,11 +59,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildNavItem(Icons.book_outlined, 0),
-            _buildNavItem(Icons.home_outlined, 1, isSpecial: true),
-            _buildNavItem(Icons.auto_awesome_outlined, 2),
-            _buildNavItem(Icons.access_time, 3),
-            _buildNavItem(Icons.person_outline, 4),
+            _buildNavItem(Icons.home_outlined, 0, isSpecial: true),
+            _buildNavItem(Icons.auto_awesome_outlined, 1),
+            _buildNavItem(Icons.access_time, 2),
+            _buildNavItem(Icons.person_outline, 3),
           ],
         ),
       ),
