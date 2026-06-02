@@ -9,6 +9,7 @@ import 'package:uas_projekk/modules/prayer/prayer_provider.dart';
 import 'package:uas_projekk/modules/profile/settings_provider.dart';
 import 'package:uas_projekk/modules/dzikir/doa_harian_provider.dart';
 import 'package:uas_projekk/modules/dzikir/dzikir_provider.dart';
+import 'package:uas_projekk/features/pilar_islam/logic/pilar_islam_provider.dart';
 
 import 'package:uas_projekk/features/debt_tracker/presentation/providers/debt_provider.dart';
 import 'package:uas_projekk/features/faraid_calculator/presentation/providers/faraid_provider.dart';
@@ -31,6 +32,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
         ChangeNotifierProvider(create: (_) => DoaHarianProvider()),
         ChangeNotifierProvider(create: (_) => DzikirProvider()),
+        ChangeNotifierProvider(create: (_) => PilarIslamProvider()),
         ChangeNotifierProvider(create: (_) {
           var provider = DebtProvider();
           provider.init(); // Initialize Hive box loading

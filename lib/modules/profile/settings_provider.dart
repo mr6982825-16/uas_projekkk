@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsProvider extends ChangeNotifier {
   bool _isDarkMode = false;
-  double _arabicFontSize = 28.0;
+  double _arabicFontSize = 24.0;
   bool _showTranslation = true;
   bool _isAdhanNotifEnabled = true;
   bool _isDzikirNotifEnabled = true;

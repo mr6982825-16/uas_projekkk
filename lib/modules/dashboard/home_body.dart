@@ -2,74 +2,62 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:uas_projekk/core/theme.dart';
-import 'package:uas_projekk/modules/dzikir/dzikir_model.dart';
+import 'package:uas_projekk/features/pilar_islam/data/models/doa_model.dart';
+import 'package:uas_projekk/features/pilar_islam/logic/pilar_islam_provider.dart';
 import 'package:uas_projekk/modules/dzikir/niat_salat_model.dart';
 import 'package:uas_projekk/modules/profile/settings_provider.dart';
-class HomeBody extends StatefulWidget {
+class HomeBody extends StatelessWidget {
   const HomeBody({super.key});
-
-  @override
-  State<HomeBody> createState() => _HomeBodyState();
-}
-
-class _HomeBodyState extends State<HomeBody> {
-  String _selectedCategory = "Pagi";
-
-  final List<String> _categories = ["Pagi", "Malam", "Shalat", "Perjalanan", "Fajar", "Siang", "Sore"];
-
-  List<Dzikir> get _filteredDoa {
-    String filterCat = _selectedCategory;
-    if (_selectedCategory == "Shalat") filterCat = "Sunnah";
-    if (_selectedCategory == "Perjalanan") filterCat = "Rumah";
-    
-    return DzikirData.allData
-        .where((d) => d.category == filterCat)
-        .toList();
-  }
 
   @override
   Widget build(BuildContext context) {
     final settings = Provider.of<SettingsProvider>(context);
     final theme = Theme.of(context);
 
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: CustomPaint(
-            painter: GridPatternPainter(color: settings.isDarkMode ? Colors.white10 : Colors.grey.withOpacity(0.05)),
-          ),
-        ),
-        SafeArea(
-          child: Column(
-            children: [
-              _buildFloatingAppBar(settings, theme),
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 15),
-                      _buildCategoryScroll(settings, theme),
-                      const SizedBox(height: 30),
-                      _buildSectionHeader("Niat Salat", true, theme),
-                      const SizedBox(height: 15),
-                      _buildNiatCarousel(settings, theme),
-                      const SizedBox(height: 35),
-                      _buildSectionHeader("Doa Harian", false, theme),
-                      const SizedBox(height: 15),
-                      _buildFilteredDoaList(settings, theme),
-                      const SizedBox(height: 20),
-                      _buildFeaturedBanner(),
-                      const SizedBox(height: 100),
-                    ],
-                  ),
+    return Consumer<PilarIslamProvider>(
+      builder: (context, pilar, child) {
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: CustomPaint(
+                painter: GridPatternPainter(
+                  color: settings.isDarkMode ? Colors.white10 : Colors.grey.withOpacity(0.05),
                 ),
               ),
-            ],
-          ),
-        ),
-      ],
+            ),
+            SafeArea(
+              child: Column(
+                children: [
+                  _buildFloatingAppBar(settings, theme),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 15),
+                          _buildCategoryScroll(settings, theme, pilar),
+                          const SizedBox(height: 30),
+                          _buildSectionHeader("Niat Salat", true, theme),
+                          const SizedBox(height: 15),
+                          _buildNiatCarousel(settings, theme),
+                          const SizedBox(height: 35),
+                          _buildSectionHeader("Daftar Doa", false, theme),
+                          const SizedBox(height: 15),
+                          _buildFilteredDoaList(settings, theme, pilar),
+                          const SizedBox(height: 20),
+                          _buildFeaturedBanner(),
+                          const SizedBox(height: 100),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -110,18 +98,18 @@ class _HomeBodyState extends State<HomeBody> {
     );
   }
 
-  Widget _buildCategoryScroll(SettingsProvider settings, ThemeData theme) {
+  Widget _buildCategoryScroll(SettingsProvider settings, ThemeData theme, PilarIslamProvider provider) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
-        children: _categories.map((category) {
-          bool isSelected = _selectedCategory == category;
+        children: provider.categories.map((category) {
+          final bool isSelected = provider.selectedCategory == category;
           return Padding(
             padding: const EdgeInsets.only(right: 12),
             child: InkWell(
-              onTap: () => setState(() => _selectedCategory = category),
+              onTap: () => provider.selectCategory(category),
               borderRadius: BorderRadius.circular(25),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 250),
@@ -271,14 +259,14 @@ class _HomeBodyState extends State<HomeBody> {
     }
   }
 
-  Widget _buildFilteredDoaList(SettingsProvider settings, ThemeData theme) {
-    final list = _filteredDoa;
+  Widget _buildFilteredDoaList(SettingsProvider settings, ThemeData theme, PilarIslamProvider provider) {
+    final list = provider.filteredDoa;
     if (list.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 40),
           child: Text(
-            "Data untuk kategori '$_selectedCategory' belum tersedia",
+            "Data untuk kategori '${provider.selectedCategory}' belum tersedia",
             style: GoogleFonts.inter(color: Colors.grey),
           ),
         ),
@@ -293,7 +281,7 @@ class _HomeBodyState extends State<HomeBody> {
     );
   }
 
-  Widget _buildDoaCard(Dzikir doa, SettingsProvider settings, ThemeData theme) {
+  Widget _buildDoaCard(DoaModel doa, SettingsProvider settings, ThemeData theme) {
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
       padding: const EdgeInsets.all(25),
@@ -328,7 +316,7 @@ class _HomeBodyState extends State<HomeBody> {
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    doa.judul,
+                    doa.title,
                     style: GoogleFonts.inter(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -351,7 +339,7 @@ class _HomeBodyState extends State<HomeBody> {
           Align(
             alignment: Alignment.centerRight,
             child: Text(
-              doa.arab,
+              doa.arabicText,
               textAlign: TextAlign.right,
               style: GoogleFonts.amiri(
                 fontSize: settings.arabicFontSize,
@@ -362,7 +350,23 @@ class _HomeBodyState extends State<HomeBody> {
             ),
           ),
           const SizedBox(height: 15),
+          if (doa.target > 1)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: settings.isDarkMode ? Colors.white10 : const Color(0xFFF0F4F2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'Baca ${doa.target}x',
+                  style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textGrey),
+                ),
+              ),
+            ),
           if (settings.showTranslation) ...[
+            const SizedBox(height: 15),
             const Divider(height: 1),
             const SizedBox(height: 15),
             Text(
@@ -375,7 +379,7 @@ class _HomeBodyState extends State<HomeBody> {
             ),
             const SizedBox(height: 8),
             Text(
-              "\"${doa.terjemahan}\"",
+              doa.translation,
               style: GoogleFonts.inter(
                 fontSize: 13,
                 color: theme.colorScheme.onSurface.withOpacity(0.7),

@@ -229,6 +229,7 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
     final isPlaying = _playingAyahNumber == ayah.number;
     final highlightColor = const Color(0xFF0F4D3A);
     final normalArabicColor = settings.isDarkMode ? Colors.white70 : Colors.black87;
+    final ayahFontSize = (settings.arabicFontSize - 2).clamp(20.0, 36.0);
 
     return Column(
       key: ValueKey("ayah_${ayah.number}"),
@@ -276,9 +277,9 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
           child: AnimatedDefaultTextStyle(
             duration: const Duration(milliseconds: 500),
             style: GoogleFonts.amiri(
-              fontSize: settings.arabicFontSize,
-              height: 2.0,
-              fontWeight: isPlaying ? FontWeight.bold : FontWeight.normal,
+              fontSize: ayahFontSize,
+              height: 1.6,
+              fontWeight: isPlaying ? FontWeight.w500 : FontWeight.normal,
               color: isPlaying ? highlightColor : normalArabicColor,
             ),
             child: Text(
