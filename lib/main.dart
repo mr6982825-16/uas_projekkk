@@ -13,7 +13,7 @@ import 'package:uas_projekk/features/pilar_islam/logic/pilar_islam_provider.dart
 
 import 'package:uas_projekk/features/debt_tracker/presentation/providers/debt_provider.dart';
 import 'package:uas_projekk/features/faraid_calculator/presentation/providers/faraid_provider.dart';
-import 'package:uas_projekk/features/halal_scanner/presentation/providers/scanner_provider.dart';
+import 'package:uas_projekk/features/islamic_maps/presentation/providers/maps_provider.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 void main() async {
@@ -39,7 +39,7 @@ void main() async {
           return provider;
         }),
         ChangeNotifierProvider(create: (_) => FaraidProvider()),
-        ChangeNotifierProvider(create: (_) => ScannerProvider()),
+        ChangeNotifierProvider(create: (_) => MapsProvider()),
       ],
       child: const MyApp(),
     ),
