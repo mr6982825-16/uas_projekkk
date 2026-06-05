@@ -17,8 +17,8 @@ class PlacesApiClient {
         query = '''
         [out:json][timeout:25];
         (
-          node["amenity"="place_of_worship"]["religion"="muslim"](around:5000, \$lat, \$lng);
-          way["amenity"="place_of_worship"]["religion"="muslim"](around:5000, \$lat, \$lng);
+          node["amenity"="place_of_worship"]["religion"="muslim"](around:5000, ${lat}, ${lng});
+          way["amenity"="place_of_worship"]["religion"="muslim"](around:5000, ${lat}, ${lng});
         );
         out center;
         ''';
@@ -27,9 +27,9 @@ class PlacesApiClient {
         query = '''
         [out:json][timeout:25];
         (
-          node["amenity"="restaurant"]["diet:halal"="yes"](around:5000, \$lat, \$lng);
-          node["amenity"="fast_food"]["diet:halal"="yes"](around:5000, \$lat, \$lng);
-          node["amenity"="restaurant"](around:5000, \$lat, \$lng); 
+          node["amenity"="restaurant"]["diet:halal"="yes"](around:5000, ${lat}, ${lng});
+          node["amenity"="fast_food"]["diet:halal"="yes"](around:5000, ${lat}, ${lng});
+          node["amenity"="restaurant"](around:5000, ${lat}, ${lng}); 
         );
         out center;
         ''';

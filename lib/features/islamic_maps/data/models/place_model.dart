@@ -28,8 +28,8 @@ class PlaceModel {
     String address = '';
     if (tags['addr:street'] != null) {
       address = tags['addr:street'];
-      if (tags['addr:housenumber'] != null) address += ' No. \${tags['addr:housenumber']}';
-      if (tags['addr:city'] != null) address += ', \${tags['addr:city']}';
+      if (tags['addr:housenumber'] != null) address += " No. ${tags['addr:housenumber']}";
+      if (tags['addr:city'] != null) address += ", ${tags['addr:city']}";
     } else {
       address = tags['description'] ?? 'Lokasi berbasis OpenStreetMap';
     }

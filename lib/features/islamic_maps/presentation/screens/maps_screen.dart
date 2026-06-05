@@ -25,12 +25,12 @@ class _MapsScreenState extends State<MapsScreen> {
 
   void _openExternalMaps(double lat, double lng) async {
     // Universal URI that opens in Google Maps or default map app
-    final url = 'geo:\$lat,\$lng?q=\$lat,\$lng';
+    final url = 'geo:$lat,$lng?q=$lat,$lng';
     if (await canLaunchUrl(Uri.parse(url))) {
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
     } else {
       // Fallback to web URL
-      final webUrl = 'https://www.google.com/maps/search/?api=1&query=\$lat,\$lng';
+      final webUrl = 'https://www.google.com/maps/search/?api=1&query=$lat,$lng';
       if (await canLaunchUrl(Uri.parse(webUrl))) {
         await launchUrl(Uri.parse(webUrl), mode: LaunchMode.externalApplication);
       } else {
@@ -71,7 +71,7 @@ class _MapsScreenState extends State<MapsScreen> {
                     const Icon(Icons.star, color: Colors.amber, size: 18),
                     const SizedBox(width: 5),
                     Text(
-                      "\${place.rating} (\${place.userRatingsTotal} ulasan)",
+                      "${place.rating} (${place.userRatingsTotal} ulasan)",
                       style: GoogleFonts.inter(fontSize: 14, color: Colors.grey),
                     ),
                   ],
@@ -173,8 +173,8 @@ class _MapsScreenState extends State<MapsScreen> {
               FlutterMap(
                 mapController: provider.mapController,
                 options: MapOptions(
-                  initialCenter: initialCenter,
-                  initialZoom: 15.0,
+                  center: initialCenter,
+                  zoom: 15.0,
                 ),
                 children: [
                   TileLayer(
