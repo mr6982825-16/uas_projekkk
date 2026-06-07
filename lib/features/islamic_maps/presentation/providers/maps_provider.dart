@@ -1,13 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../data/api/places_api_client.dart';
 import '../../data/models/place_model.dart';
 
 class MapsProvider with ChangeNotifier {
-  final MapController _mapController = MapController();
+  GoogleMapController? _mapController;
   Position? _currentPosition;
   bool _isLoading = true;
   String _errorMessage = '';
@@ -15,34 +14,32 @@ class MapsProvider with ChangeNotifier {
   // Custom marker for user
   Marker? _userMarker;
   List<PlaceModel> _places = [];
-  List<Marker> _placeMarkers = [];
+  Set<Marker> _placeMarkers = {};
   
   // Filter state
   String _currentFilter = 'Semua';
   final PlacesApiClient _placesApi = PlacesApiClient();
 
-  MapController get mapController => _mapController;
+  GoogleMapController? get mapController => _mapController;
   Position? get currentPosition => _currentPosition;
   bool get isLoading => _isLoading;
   String get errorMessage => _errorMessage;
   String get currentFilter => _currentFilter;
   List<PlaceModel> get places => _places;
   
-  List<Marker> get allMarkers {
-    List<Marker> markers = List.from(_placeMarkers);
+  Set<Marker> get allMarkers {
+    Set<Marker> markers = Set.from(_placeMarkers);
     if (_userMarker != null) {
       markers.add(_userMarker!);
     }
     return markers;
   }
 
-  // Selected place for bottom sheet
-  PlaceModel? _selectedPlace;
-  PlaceModel? get selectedPlace => _selectedPlace;
-  
-  void clearSelectedPlace() {
-    _selectedPlace = null;
-    notifyListeners();
+  void onMapCreated(GoogleMapController controller) {
+    _mapController = controller;
+    if (_currentPosition != null) {
+      recenterToUser();
+    }
   }
 
   Future<void> fetchUserLocation() async {
@@ -84,7 +81,6 @@ class MapsProvider with ChangeNotifier {
       _updateUserMarker();
       await fetchPlaces('Semua'); // Default fetch
       
-      recenterToUser(); // recenter after getting location
     } catch (e) {
       _errorMessage = 'Gagal mendapatkan lokasi: \$e';
     } finally {
@@ -97,14 +93,10 @@ class MapsProvider with ChangeNotifier {
     if (_currentPosition == null) return;
     
     _userMarker = Marker(
-      point: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
-      width: 40,
-      height: 40,
-      child: const Icon(
-        Icons.my_location,
-        color: Colors.blue,
-        size: 30,
-      ),
+      markerId: const MarkerId('user_location'),
+      position: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+      infoWindow: const InfoWindow(title: 'Lokasi Anda'),
+      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
     );
   }
 
@@ -122,7 +114,8 @@ class MapsProvider with ChangeNotifier {
         final masjidData = await _placesApi.searchNearby(
           _currentPosition!.latitude, 
           _currentPosition!.longitude, 
-          'mosque'
+          'mosque', 
+          'masjid'
         );
         _places.addAll(masjidData);
       }
@@ -131,6 +124,7 @@ class MapsProvider with ChangeNotifier {
         final halalData = await _placesApi.searchNearby(
           _currentPosition!.latitude, 
           _currentPosition!.longitude, 
+          'restaurant', 
           'halal'
         );
         _places.addAll(halalData);
@@ -146,40 +140,45 @@ class MapsProvider with ChangeNotifier {
     }
   }
   
+  // Selected place for bottom sheet
+  PlaceModel? _selectedPlace;
+  PlaceModel? get selectedPlace => _selectedPlace;
+  
+  void clearSelectedPlace() {
+    _selectedPlace = null;
+    notifyListeners();
+  }
+
   void _generatePlaceMarkers() {
     _placeMarkers.clear();
     
     for (var place in _places) {
       final isMosque = place.name.toLowerCase().contains('masjid') || place.name.toLowerCase().contains('mosque');
-      final color = isMosque ? Colors.green : Colors.orange;
-      final icon = isMosque ? Icons.mosque : Icons.restaurant;
+      final hue = isMosque ? BitmapDescriptor.hueGreen : BitmapDescriptor.hueOrange;
       
       _placeMarkers.add(
         Marker(
-          point: LatLng(place.latitude, place.longitude),
-          width: 40,
-          height: 40,
-          child: GestureDetector(
-            onTap: () {
-              _selectedPlace = place;
-              notifyListeners();
-            },
-            child: Icon(
-              icon,
-              color: color,
-              size: 30,
-            ),
-          ),
+          markerId: MarkerId(place.placeId),
+          position: LatLng(place.latitude, place.longitude),
+          icon: BitmapDescriptor.defaultMarkerWithHue(hue),
+          onTap: () {
+            _selectedPlace = place;
+            notifyListeners();
+          },
         )
       );
     }
   }
 
   void recenterToUser() {
-    if (_currentPosition != null) {
-      _mapController.move(
-        LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
-        15.0,
+    if (_mapController != null && _currentPosition != null) {
+      _mapController!.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+            zoom: 15.0,
+          ),
+        ),
       );
     }
   }

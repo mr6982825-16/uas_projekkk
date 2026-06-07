@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/maps_provider.dart';
@@ -23,23 +22,14 @@ class _MapsScreenState extends State<MapsScreen> {
     });
   }
 
-  void _openExternalMaps(double lat, double lng) async {
-    // Universal URI that opens in Google Maps or default map app
-    final url = 'geo:$lat,$lng?q=$lat,$lng';
+  void _openGoogleMaps(double lat, double lng) async {
+    final url = 'https://www.google.com/maps/search/?api=1&query=\$lat,\$lng';
     if (await canLaunchUrl(Uri.parse(url))) {
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
     } else {
-      // Fallback to web URL
-      final webUrl = 'https://www.google.com/maps/search/?api=1&query=$lat,$lng';
-      if (await canLaunchUrl(Uri.parse(webUrl))) {
-        await launchUrl(Uri.parse(webUrl), mode: LaunchMode.externalApplication);
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Tidak dapat membuka aplikasi peta')),
-          );
-        }
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tidak dapat membuka Google Maps')),
+      );
     }
   }
 
@@ -64,19 +54,17 @@ class _MapsScreenState extends State<MapsScreen> {
                   color: theme.colorScheme.onSurface,
                 ),
               ),
-              if (place.rating > 0) ...[
-                const SizedBox(height: 5),
-                Row(
-                  children: [
-                    const Icon(Icons.star, color: Colors.amber, size: 18),
-                    const SizedBox(width: 5),
-                    Text(
-                      "${place.rating} (${place.userRatingsTotal} ulasan)",
-                      style: GoogleFonts.inter(fontSize: 14, color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ],
+              const SizedBox(height: 5),
+              Row(
+                children: [
+                  const Icon(Icons.star, color: Colors.amber, size: 18),
+                  const SizedBox(width: 5),
+                  Text(
+                    "\${place.rating} (\${place.userRatingsTotal} ulasan)",
+                    style: GoogleFonts.inter(fontSize: 14, color: Colors.grey),
+                  ),
+                ],
+              ),
               const SizedBox(height: 10),
               Text(
                 place.vicinity,
@@ -88,7 +76,7 @@ class _MapsScreenState extends State<MapsScreen> {
                 child: ElevatedButton.icon(
                   onPressed: () {
                     Navigator.pop(context);
-                    _openExternalMaps(place.latitude, place.longitude);
+                    _openGoogleMaps(place.latitude, place.longitude);
                   },
                   icon: const Icon(Icons.directions),
                   label: const Text("Rute ke Lokasi"),
@@ -118,7 +106,7 @@ class _MapsScreenState extends State<MapsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "Peta Islami (OSM)",
+          "Islamic Maps",
           style: GoogleFonts.inter(fontWeight: FontWeight.bold),
         ),
         backgroundColor: theme.scaffoldBackgroundColor,
@@ -128,6 +116,7 @@ class _MapsScreenState extends State<MapsScreen> {
       body: Consumer<MapsProvider>(
         builder: (context, provider, child) {
           
+          // Listener for bottom sheet
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (provider.selectedPlace != null) {
               _showPlaceDetails(context, provider.selectedPlace!, theme);
@@ -163,28 +152,23 @@ class _MapsScreenState extends State<MapsScreen> {
             );
           }
 
-          final initialCenter = LatLng(
-            provider.currentPosition?.latitude ?? -6.200000, 
-            provider.currentPosition?.longitude ?? 106.816666
+          final initialPos = CameraPosition(
+            target: LatLng(
+              provider.currentPosition?.latitude ?? -6.200000, 
+              provider.currentPosition?.longitude ?? 106.816666
+            ),
+            zoom: 15.0,
           );
 
           return Stack(
             children: [
-              FlutterMap(
-                mapController: provider.mapController,
-                options: MapOptions(
-                  center: initialCenter,
-                  zoom: 15.0,
-                ),
-                children: [
-                  TileLayer(
-                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.example.uas_projekk',
-                  ),
-                  MarkerLayer(
-                    markers: provider.allMarkers,
-                  ),
-                ],
+              GoogleMap(
+                initialCameraPosition: initialPos,
+                onMapCreated: provider.onMapCreated,
+                markers: provider.allMarkers,
+                myLocationEnabled: false, // We use custom marker
+                myLocationButtonEnabled: false,
+                zoomControlsEnabled: false,
               ),
               
               // Filter Chips
