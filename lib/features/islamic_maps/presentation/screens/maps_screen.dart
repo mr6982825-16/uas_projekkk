@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/maps_provider.dart';
@@ -22,13 +23,13 @@ class _MapsScreenState extends State<MapsScreen> {
     });
   }
 
-  void _openGoogleMaps(double lat, double lng) async {
-    final url = 'https://www.google.com/maps/search/?api=1&query=\$lat,\$lng';
+  void _openOpenStreetMap(double lat, double lng) async {
+    final url = 'https://www.openstreetmap.org/?mlat=$lat&mlon=$lng#map=16/$lat/$lng';
     if (await canLaunchUrl(Uri.parse(url))) {
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tidak dapat membuka Google Maps')),
+        const SnackBar(content: Text('Tidak dapat membuka OpenStreetMap')),
       );
     }
   }
@@ -55,19 +56,20 @@ class _MapsScreenState extends State<MapsScreen> {
                 ),
               ),
               const SizedBox(height: 5),
-              Row(
-                children: [
-                  const Icon(Icons.star, color: Colors.amber, size: 18),
-                  const SizedBox(width: 5),
-                  Text(
-                    "\${place.rating} (\${place.userRatingsTotal} ulasan)",
-                    style: GoogleFonts.inter(fontSize: 14, color: Colors.grey),
-                  ),
-                ],
-              ),
+              if (place.rating > 0)
+                Row(
+                  children: [
+                    const Icon(Icons.star, color: Colors.amber, size: 18),
+                    const SizedBox(width: 5),
+                    Text(
+                      '${place.rating} (${place.userRatingsTotal} ulasan)',
+                      style: GoogleFonts.inter(fontSize: 14, color: Colors.grey),
+                    ),
+                  ],
+                ),
               const SizedBox(height: 10),
               Text(
-                place.vicinity,
+                place.vicinity.isNotEmpty ? place.vicinity : 'Lokasi gratis via OpenStreetMap',
                 style: GoogleFonts.inter(fontSize: 14, color: theme.colorScheme.onSurface),
               ),
               const SizedBox(height: 20),
@@ -76,10 +78,10 @@ class _MapsScreenState extends State<MapsScreen> {
                 child: ElevatedButton.icon(
                   onPressed: () {
                     Navigator.pop(context);
-                    _openGoogleMaps(place.latitude, place.longitude);
+                    _openOpenStreetMap(place.latitude, place.longitude);
                   },
                   icon: const Icon(Icons.directions),
-                  label: const Text("Rute ke Lokasi"),
+                  label: const Text('Buka di OpenStreetMap'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: theme.primaryColor,
                     foregroundColor: Colors.white,
@@ -102,11 +104,11 @@ class _MapsScreenState extends State<MapsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "Islamic Maps",
+          'Peta Islami',
           style: GoogleFonts.inter(fontWeight: FontWeight.bold),
         ),
         backgroundColor: theme.scaffoldBackgroundColor,
@@ -115,8 +117,6 @@ class _MapsScreenState extends State<MapsScreen> {
       ),
       body: Consumer<MapsProvider>(
         builder: (context, provider, child) {
-          
-          // Listener for bottom sheet
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (provider.selectedPlace != null) {
               _showPlaceDetails(context, provider.selectedPlace!, theme);
@@ -126,7 +126,7 @@ class _MapsScreenState extends State<MapsScreen> {
           if (provider.isLoading && provider.currentPosition == null) {
             return const Center(child: CircularProgressIndicator());
           }
-          
+
           if (provider.errorMessage.isNotEmpty && provider.currentPosition == null) {
             return Center(
               child: Padding(
@@ -144,7 +144,7 @@ class _MapsScreenState extends State<MapsScreen> {
                     const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: () => provider.fetchUserLocation(),
-                      child: const Text("Coba Lagi"),
+                      child: const Text('Coba Lagi'),
                     )
                   ],
                 ),
@@ -152,26 +152,28 @@ class _MapsScreenState extends State<MapsScreen> {
             );
           }
 
-          final initialPos = CameraPosition(
-            target: LatLng(
-              provider.currentPosition?.latitude ?? -6.200000, 
-              provider.currentPosition?.longitude ?? 106.816666
-            ),
-            zoom: 15.0,
+          final initialCenter = LatLng(
+            provider.currentPosition?.latitude ?? -6.200000,
+            provider.currentPosition?.longitude ?? 106.816666,
           );
 
           return Stack(
             children: [
-              GoogleMap(
-                initialCameraPosition: initialPos,
-                onMapCreated: provider.onMapCreated,
-                markers: provider.allMarkers,
-                myLocationEnabled: false, // We use custom marker
-                myLocationButtonEnabled: false,
-                zoomControlsEnabled: false,
+              FlutterMap(
+                mapController: provider.mapController,
+                options: MapOptions(
+                  initialCenter: initialCenter,
+                  initialZoom: 15.0,
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.example.uas_projekk',
+                  ),
+                  MarkerLayer(markers: provider.allMarkers),
+                ],
               ),
-              
-              // Filter Chips
+
               Positioned(
                 top: 10,
                 left: 10,
@@ -204,7 +206,8 @@ class _MapsScreenState extends State<MapsScreen> {
                         boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)],
                       ),
                       child: const SizedBox(
-                        width: 20, height: 20,
+                        width: 20,
+                        height: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       ),
                     ),

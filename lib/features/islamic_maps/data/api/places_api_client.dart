@@ -1,39 +1,81 @@
+import 'dart:math';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../models/place_model.dart';
 
 class PlacesApiClient {
   final Dio _dio = Dio();
-  // Ganti dengan Google Maps API Key Anda! Harus sama dengan yang di AndroidManifest.xml
-  static const String _apiKey = "AIzaSyA_Masukkan_Kunci_Asli_Anda_Di_Sini";
-  
-  final String _baseUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json";
 
   Future<List<PlaceModel>> searchNearby(double lat, double lng, String type, String keyword) async {
+    final query = _buildOverpassQuery(lat, lng, type, keyword);
+
     try {
-      final response = await _dio.get(
-        _baseUrl,
-        queryParameters: {
-          'location': '\$lat,\$lng',
-          'radius': '5000', // 5 KM
-          'type': type,
-          'keyword': keyword,
-          'key': _apiKey,
-        }
+      final response = await _dio.post(
+        'https://overpass-api.de/api/interpreter',
+        data: query,
+        options: Options(headers: {'Content-Type': 'application/x-www-form-urlencoded'}),
       );
 
-      if (response.statusCode == 200 && response.data['status'] == 'OK') {
-        final List results = response.data['results'];
-        return results.map((json) => PlaceModel.fromJson(json)).toList();
-      } else {
-        debugPrint("Places API Error: \${response.data['status']}");
-        if (response.data['status'] == 'REQUEST_DENIED') {
-          debugPrint("Pastikan API Key valid dan Google Places API sudah diaktifkan di GCP!");
-        }
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        final elements = data['elements'] as List<dynamic>? ?? <dynamic>[];
+
+        return elements
+            .whereType<Map<String, dynamic>>()
+            .map((element) => PlaceModel.fromOverpassJson(element))
+            .where((place) => place.latitude != 0.0 || place.longitude != 0.0)
+            .toList();
       }
     } catch (e) {
-      debugPrint("Exception fetching places: \$e");
+      debugPrint('Exception fetching places: $e');
     }
+
     return [];
+  }
+
+  String _buildOverpassQuery(double lat, double lng, String type, String keyword) {
+    const radiusKm = 5.0;
+    final latDelta = radiusKm / 111.32;
+    final lonDelta = radiusKm / (111.32 * cos(lat * pi / 180));
+
+    final south = lat - latDelta;
+    final north = lat + latDelta;
+    final west = lng - lonDelta;
+    final east = lng + lonDelta;
+
+    final isMosque = type == 'mosque';
+    final keywordText = keyword.toLowerCase();
+
+    String searchClause;
+    if (isMosque) {
+      searchClause = '''
+        node["amenity"="place_of_worship"]["religion"="muslim"]($south,$west,$north,$east);
+        way["amenity"="place_of_worship"]["religion"="muslim"]($south,$west,$north,$east);
+        relation["amenity"="place_of_worship"]["religion"="muslim"]($south,$west,$north,$east);
+      ''';
+    } else {
+      searchClause = '''
+        node["amenity"="restaurant"]($south,$west,$north,$east);
+        way["amenity"="restaurant"]($south,$west,$north,$east);
+        relation["amenity"="restaurant"]($south,$west,$north,$east);
+      ''';
+    }
+
+    if (!isMosque && keywordText.contains('halal')) {
+      searchClause += '''
+        node["name"~"halal|islam|arab"]($south,$west,$north,$east);
+        way["name"~"halal|islam|arab"]($south,$west,$north,$east);
+        relation["name"~"halal|islam|arab"]($south,$west,$north,$east);
+      ''';
+    }
+
+    return '''
+      [out:json][timeout:25];
+      (
+        $searchClause
+      );
+      out center;
+    ''';
   }
 }

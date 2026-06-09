@@ -1,10 +1,11 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_qiblah/flutter_qiblah.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:uas_projekk/modules/prayer/prayer_provider.dart';
-import 'dart:math' as math;
 
 class PrayerTimesScreen extends StatefulWidget {
   const PrayerTimesScreen({super.key});
@@ -114,19 +115,61 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
 
         final times = provider.prayerTimes;
         if (times == null) {
-          return const Center(
-            child: Text("Gagal memuat jadwal. Pastikan GPS aktif."),
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Text(
+                provider.locationMessage.isNotEmpty
+                    ? provider.locationMessage
+                    : 'Gagal memuat jadwal. Pastikan GPS aktif.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(color: Colors.redAccent),
+              ),
+            ),
           );
         }
 
         return ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            _buildPrayerTile("Subuh", times.fajr),
-            _buildPrayerTile("Dzuhur", times.dhuhr),
-            _buildPrayerTile("Ashar", times.asr),
-            _buildPrayerTile("Maghrib", times.maghrib),
-            _buildPrayerTile("Isya", times.isha),
+            Container(
+              margin: const EdgeInsets.only(bottom: 15),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEAF4F0),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Lokasi aktif',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: const Color(0xFF0F4D3A),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    provider.currentPosition != null
+                        ? 'Lat: ${provider.currentPosition!.latitude.toStringAsFixed(4)} • Lon: ${provider.currentPosition!.longitude.toStringAsFixed(4)}'
+                        : 'Menunggu lokasi...',
+                    style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[700]),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Arah kiblat terhitung: ${provider.qiblaBearing.toStringAsFixed(1)}° dari utara',
+                    style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF0F4D3A)),
+                  ),
+                ],
+              ),
+            ),
+            _buildPrayerTile('Subuh', times.fajr),
+            _buildPrayerTile('Dzuhur', times.dhuhr),
+            _buildPrayerTile('Ashar', times.asr),
+            _buildPrayerTile('Maghrib', times.maghrib),
+            _buildPrayerTile('Isya', times.isha),
           ],
         );
       },
@@ -177,7 +220,26 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                 color: const Color(0xFF1B4332),
               ),
             ),
-            const SizedBox(height: 50),
+            const SizedBox(height: 20),
+            Consumer<PrayerProvider>(
+              builder: (context, provider, child) {
+                return Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF4FAF7),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Text(
+                    provider.hasLocation
+                        ? 'Posisi Anda: ${provider.currentPosition!.latitude.toStringAsFixed(4)}, ${provider.currentPosition!.longitude.toStringAsFixed(4)}'
+                        : 'Menunggu izin lokasi dan koordinat GPS...',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(color: const Color(0xFF0F4D3A), fontSize: 13),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 30),
             if (_isQiblahLoading)
               const Center(
                 child: CircularProgressIndicator(color: Color(0xFF0F4D3A)),
@@ -210,53 +272,159 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
 
                   final qiblahDirection = snapshot.data;
                   if (qiblahDirection == null) {
-                    return const Center(child: Text("Data tidak tersedia."));
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Text(
+                          'Menunggu pembacaan sensor kompas...\nGerakkan ponsel perlahan untuk mengaktifkan arah kiblat.',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.inter(color: Colors.grey[700], fontSize: 13),
+                        ),
+                      ),
+                    );
                   }
 
-                  return Stack(
-                    alignment: Alignment.center,
+                  return Column(
                     children: [
-                      Container(
-                        width: 300,
-                        height: 300,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: const Color(0xFFD4E5E1),
-                            width: 10,
-                          ),
-                        ),
+                      Consumer<PrayerProvider>(
+                        builder: (context, provider, child) {
+                          return Text(
+                            'Sudut kiblat: ${provider.qiblaBearing.toStringAsFixed(1)}°',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF0F4D3A),
+                            ),
+                          );
+                        },
                       ),
-                      Container(
-                        width: 240,
-                        height: 240,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.grey[300]!,
-                            width: 15,
-                          ),
-                        ),
-                      ),
-                      Transform.rotate(
-                        angle: (qiblahDirection.qiblah * (math.pi / 180) * -1),
-                        child: Container(
-                          width: 200,
-                          height: 200,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEAF4F0),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Transform.rotate(
-                              angle: 0,
-                              child: const Icon(
-                                Icons.navigation,
-                                size: 100,
-                                color: Color(0xFF0F4D3A),
+                      const SizedBox(height: 20),
+                      Consumer<PrayerProvider>(
+                        builder: (context, provider, child) {
+                          final locationLabel = [
+                            provider.city.isNotEmpty ? provider.city : null,
+                            provider.province.isNotEmpty ? provider.province : null,
+                            provider.country.isNotEmpty ? provider.country : null,
+                          ].whereType<String>().where((value) => value.isNotEmpty).join(', ');
+
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF4FAF7),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              locationLabel.isNotEmpty
+                                  ? locationLabel
+                                  : 'Menunggu lokasi saat ini...',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.inter(
+                                color: const Color(0xFF0F4D3A),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                          ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: 300,
+                        height: 300,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              width: 300,
+                              height: 300,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: const Color(0xFFD4E5E1),
+                                  width: 10,
+                                ),
+                                color: const Color(0xFFF8FBFB),
+                              ),
+                            ),
+                            Container(
+                              width: 250,
+                              height: 250,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.grey[300]!,
+                                  width: 12,
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              top: 20,
+                              child: Text('U', style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.redAccent)),
+                            ),
+                            Positioned(
+                              bottom: 20,
+                              child: Text('S', style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold, color: const Color(0xFF0F4D3A))),
+                            ),
+                            Positioned(
+                              left: 20,
+                              child: Text('W', style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold, color: const Color(0xFF0F4D3A))),
+                            ),
+                            Positioned(
+                              right: 20,
+                              child: Text('E', style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold, color: const Color(0xFF0F4D3A))),
+                            ),
+                            Transform.rotate(
+                              angle: (qiblahDirection.qiblah * (math.pi / 180) * -1),
+                              child: SizedBox(
+                                width: 200,
+                                height: 200,
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    Container(
+                                      width: 200,
+                                      height: 200,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFFEAF4F0),
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: 18,
+                                      child: Container(
+                                        width: 10,
+                                        height: 70,
+                                        decoration: const BoxDecoration(
+                                          color: Color(0xFF0F4D3A),
+                                          borderRadius: BorderRadius.only(topLeft: Radius.circular(8), topRight: Radius.circular(8)),
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      bottom: 18,
+                                      child: Container(
+                                        width: 10,
+                                        height: 70,
+                                        decoration: const BoxDecoration(
+                                          color: Colors.orangeAccent,
+                                          borderRadius: BorderRadius.only(bottomLeft: Radius.circular(8), bottomRight: Radius.circular(8)),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Container(
+                              width: 16,
+                              height: 16,
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
