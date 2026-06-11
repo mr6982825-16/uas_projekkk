@@ -334,6 +334,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                         child: Stack(
                           alignment: Alignment.center,
                           children: [
+                            // Outer compass dial (fixed)
                             Container(
                               width: 300,
                               height: 300,
@@ -344,17 +345,13 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                                   width: 10,
                                 ),
                                 color: const Color(0xFFF8FBFB),
-                              ),
-                            ),
-                            Container(
-                              width: 250,
-                              height: 250,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.grey[300]!,
-                                  width: 12,
-                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 10,
+                                    spreadRadius: 2,
+                                  )
+                                ],
                               ),
                             ),
                             Positioned(
@@ -367,61 +364,77 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                             ),
                             Positioned(
                               left: 20,
-                              child: Text('W', style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold, color: const Color(0xFF0F4D3A))),
+                              child: Text('B', style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold, color: const Color(0xFF0F4D3A))),
                             ),
                             Positioned(
                               right: 20,
-                              child: Text('E', style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold, color: const Color(0xFF0F4D3A))),
+                              child: Text('T', style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold, color: const Color(0xFF0F4D3A))),
                             ),
+                            
+                            // Compass needle that points to Qibla
                             Transform.rotate(
-                              angle: (qiblahDirection.qiblah * (math.pi / 180) * -1),
+                              angle: (qiblahDirection.qiblah * (math.pi / 180)),
                               child: SizedBox(
-                                width: 200,
-                                height: 200,
+                                width: 250,
+                                height: 250,
                                 child: Stack(
                                   alignment: Alignment.center,
                                   children: [
-                                    Container(
-                                      width: 200,
-                                      height: 200,
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFFEAF4F0),
-                                        shape: BoxShape.circle,
-                                      ),
-                                    ),
+                                    // The needle (Jarum Kompas)
                                     Positioned(
-                                      top: 18,
+                                      top: 40,
                                       child: Container(
-                                        width: 10,
-                                        height: 70,
+                                        width: 8,
+                                        height: 85,
                                         decoration: const BoxDecoration(
                                           color: Color(0xFF0F4D3A),
-                                          borderRadius: BorderRadius.only(topLeft: Radius.circular(8), topRight: Radius.circular(8)),
+                                          borderRadius: BorderRadius.only(
+                                            topLeft: Radius.circular(10),
+                                            topRight: Radius.circular(10),
+                                          ),
                                         ),
                                       ),
                                     ),
+                                    // The bottom counter-balance of the needle
                                     Positioned(
-                                      bottom: 18,
+                                      bottom: 60,
                                       child: Container(
-                                        width: 10,
-                                        height: 70,
+                                        width: 8,
+                                        height: 65,
                                         decoration: const BoxDecoration(
-                                          color: Colors.orangeAccent,
-                                          borderRadius: BorderRadius.only(bottomLeft: Radius.circular(8), bottomRight: Radius.circular(8)),
+                                          color: Colors.grey,
+                                          borderRadius: BorderRadius.only(
+                                            bottomLeft: Radius.circular(10),
+                                            bottomRight: Radius.circular(10),
+                                          ),
                                         ),
                                       ),
+                                    ),
+                                    // The Kaaba Icon at the tip of the needle
+                                    const Positioned(
+                                      top: 5,
+                                      child: Text('🕋', style: TextStyle(fontSize: 32)),
                                     ),
                                   ],
                                 ),
                               ),
                             ),
+                            // Center pin of the needle
                             Container(
-                              width: 16,
-                              height: 16,
+                              width: 24,
+                              height: 24,
+                              decoration: const BoxDecoration(
+                                color: Colors.orangeAccent,
+                                shape: BoxShape.circle,
+                                boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)],
+                              ),
+                            ),
+                            Container(
+                              width: 10,
+                              height: 10,
                               decoration: const BoxDecoration(
                                 color: Colors.white,
                                 shape: BoxShape.circle,
-                                boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)],
                               ),
                             ),
                           ],

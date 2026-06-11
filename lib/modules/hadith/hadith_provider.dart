@@ -93,26 +93,55 @@ class HadithProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> fetchHadiths(String bookId, {int range = 20}) async {
-    _isLoading = true;
-    _hadiths = [];
-    _error = '';
-    notifyListeners();
+  int _currentStart = 1;
+  int _currentEnd = 20;
+  bool _isFetchingMore = false;
+  bool _hasReachedMax = false;
+
+  bool get isFetchingMore => _isFetchingMore;
+  bool get hasReachedMax => _hasReachedMax;
+
+  Future<void> fetchHadiths(String bookId, {bool loadMore = false}) async {
+    if (loadMore) {
+      if (_isFetchingMore || _hasReachedMax) return;
+      _isFetchingMore = true;
+      _currentStart += 20;
+      _currentEnd += 20;
+      notifyListeners();
+    } else {
+      _isLoading = true;
+      _hadiths = [];
+      _error = '';
+      _currentStart = 1;
+      _currentEnd = 20;
+      _hasReachedMax = false;
+      notifyListeners();
+    }
 
     bool success = false;
     for (String baseUrl in _mirrors) {
       try {
-        final response = await _dio.get("$baseUrl/books/$bookId?range=1-$range");
+        final response = await _dio.get("$baseUrl/books/$bookId?range=$_currentStart-$_currentEnd");
         if (response.statusCode == 200) {
           var responseData = response.data;
           
-          // Fix for Proxy returning String instead of JSON
           if (responseData is String) {
             responseData = jsonDecode(responseData);
           }
 
           final List data = responseData['data']['hadiths'];
-          _hadiths = data.map((json) => HadithItem.fromJson(json)).toList();
+          
+          if (data.isEmpty) {
+            _hasReachedMax = true;
+          } else {
+            final newHadiths = data.map((json) => HadithItem.fromJson(json)).toList();
+            if (loadMore) {
+              _hadiths.addAll(newHadiths);
+            } else {
+              _hadiths = newHadiths;
+            }
+          }
+          
           success = true;
           _error = '';
           break;
@@ -123,11 +152,12 @@ class HadithProvider extends ChangeNotifier {
       }
     }
 
-    if (!success) {
+    if (!success && !loadMore) {
       _error = "Gagal memuat hadits. Pastikan koneksi internet stabil.";
     }
 
     _isLoading = false;
+    _isFetchingMore = false;
     notifyListeners();
   }
 }

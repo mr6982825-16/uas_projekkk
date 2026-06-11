@@ -146,10 +146,27 @@ class HadithDetailListScreen extends StatefulWidget {
 }
 
 class _HadithDetailListScreenState extends State<HadithDetailListScreen> {
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
     Future.microtask(() => context.read<HadithProvider>().fetchHadiths(widget.book.id));
+    
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+        final provider = context.read<HadithProvider>();
+        if (!provider.isFetchingMore && !provider.hasReachedMax) {
+          provider.fetchHadiths(widget.book.id, loadMore: true);
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -207,9 +224,19 @@ class _HadithDetailListScreenState extends State<HadithDetailListScreen> {
           }
 
           return ListView.builder(
+            controller: _scrollController,
             padding: const EdgeInsets.all(20),
-            itemCount: provider.hadiths.length,
+            itemCount: provider.hadiths.length + (provider.isFetchingMore ? 1 : 0),
             itemBuilder: (context, index) {
+              if (index == provider.hadiths.length) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 20),
+                    child: CircularProgressIndicator(color: Color(0xFF0F4D3A)),
+                  ),
+                );
+              }
+
               final hadith = provider.hadiths[index];
               return Container(
                 margin: const EdgeInsets.only(bottom: 25),

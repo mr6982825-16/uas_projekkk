@@ -45,35 +45,40 @@ class PlacesApiClient {
     final east = lng + lonDelta;
 
     final isMosque = type == 'mosque';
-    final keywordText = keyword.toLowerCase();
 
     String searchClause;
     if (isMosque) {
+      // Lebih akurat untuk Indonesia: cari amenity, building=mosque, atau nama yang mengandung unsur masjid
       searchClause = '''
         node["amenity"="place_of_worship"]["religion"="muslim"]($south,$west,$north,$east);
         way["amenity"="place_of_worship"]["religion"="muslim"]($south,$west,$north,$east);
         relation["amenity"="place_of_worship"]["religion"="muslim"]($south,$west,$north,$east);
+        
+        node["building"="mosque"]($south,$west,$north,$east);
+        way["building"="mosque"]($south,$west,$north,$east);
+        
+        node["name"~"masjid|mushola|musholla|surau|langgar|mosque", i]($south,$west,$north,$east);
+        way["name"~"masjid|mushola|musholla|surau|langgar|mosque", i]($south,$west,$north,$east);
       ''';
     } else {
+      // Untuk makanan halal di Indonesia, tag diet:halal jarang dipakai.
+      // Kita cari restoran/kafe, atau tempat makan lokal populer (warung, bakso, dll)
       searchClause = '''
-        node["amenity"="restaurant"]($south,$west,$north,$east);
-        way["amenity"="restaurant"]($south,$west,$north,$east);
-        relation["amenity"="restaurant"]($south,$west,$north,$east);
-      ''';
-    }
-
-    if (!isMosque && keywordText.contains('halal')) {
-      searchClause += '''
-        node["name"~"halal|islam|arab"]($south,$west,$north,$east);
-        way["name"~"halal|islam|arab"]($south,$west,$north,$east);
-        relation["name"~"halal|islam|arab"]($south,$west,$north,$east);
+        node["diet:halal"="yes"]($south,$west,$north,$east);
+        way["diet:halal"="yes"]($south,$west,$north,$east);
+        
+        node["amenity"~"restaurant|cafe|fast_food|food_court"]($south,$west,$north,$east);
+        way["amenity"~"restaurant|cafe|fast_food|food_court"]($south,$west,$north,$east);
+        
+        node["name"~"warung|rumah makan|resto|bakso|soto|sate|ayam geprek|nasi padang|kebab", i]($south,$west,$north,$east);
+        way["name"~"warung|rumah makan|resto|bakso|soto|sate|ayam geprek|nasi padang|kebab", i]($south,$west,$north,$east);
       ''';
     }
 
     return '''
       [out:json][timeout:25];
       (
-        $searchClause
+        \$searchClause
       );
       out center;
     ''';
