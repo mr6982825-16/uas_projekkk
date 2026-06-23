@@ -1,6 +1,5 @@
-import 'dart:convert';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:uas_projekk/modules/hadith/hadith_data.dart';
 
 class HadithBook {
   final String name;
@@ -29,17 +28,13 @@ class HadithItem {
     return HadithItem(
       number: int.tryParse(json['number'].toString()) ?? 0,
       arab: json['arab'] ?? '',
-      contents: json['id'] ?? '', 
+      // API may return the translation under different keys depending on mirror/proxy
+      contents: json['contents'] ?? json['content'] ?? json['translation'] ?? json['translate'] ?? json['body'] ?? json['text'] ?? json['id'] ?? '',
     );
   }
 }
 
 class HadithProvider extends ChangeNotifier {
-  final Dio _dio = Dio(BaseOptions(
-    connectTimeout: const Duration(seconds: 15),
-    receiveTimeout: const Duration(seconds: 15),
-  ));
-  
   List<HadithBook> _books = [];
   List<HadithItem> _hadiths = [];
   bool _isLoading = false;
@@ -50,45 +45,22 @@ class HadithProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String get error => _error;
 
-  final List<String> _mirrors = [
-    "https://api.hadith.gading.dev",
-    "https://hadith-api-ghazihan.vercel.app", 
-    "https://corsproxy.io/?https://api.hadith.gading.dev", // Fallback CORS proxy for Flutter Web
-  ];
-
   Future<void> fetchBooks() async {
     if (_books.isNotEmpty && _error.isEmpty) return;
-    
+
     _isLoading = true;
     _error = '';
     notifyListeners();
 
-    for (String baseUrl in _mirrors) {
-      try {
-        final response = await _dio.get("$baseUrl/books");
-        if (response.statusCode == 200) {
-          var responseData = response.data;
-          
-          // Fix for Proxy returning String instead of JSON
-          if (responseData is String) {
-            responseData = jsonDecode(responseData);
-          }
-
-          final List data = responseData['data'];
-          _books = data.map((json) => HadithBook.fromJson(json)).toList();
-          _error = '';
-          break; // Success
-        }
-      } catch (e) {
-        _error = "Error: $e";
-        debugPrint("Error fetching books from $baseUrl: $e");
-      }
+    try {
+      _books = hadithBooksData.map((json) => HadithBook.fromJson(json)).toList();
+      _error = '';
+    } catch (e) {
+      _books = [];
+      _error = 'Gagal memuat daftar hadist.';
+      debugPrint('Error loading local hadith books: $e');
     }
 
-    if (_books.isEmpty && _error.isNotEmpty && !_error.contains("Timeout")) {
-      _error = "Gagal menghubungkan ke server hadits. Periksa koneksi internet Anda.";
-    }
-    
     _isLoading = false;
     notifyListeners();
   }
@@ -118,42 +90,27 @@ class HadithProvider extends ChangeNotifier {
       notifyListeners();
     }
 
-    bool success = false;
-    for (String baseUrl in _mirrors) {
-      try {
-        final response = await _dio.get("$baseUrl/books/$bookId?range=$_currentStart-$_currentEnd");
-        if (response.statusCode == 200) {
-          var responseData = response.data;
-          
-          if (responseData is String) {
-            responseData = jsonDecode(responseData);
-          }
+    try {
+      final allHadiths = hadithItemsByBook[bookId] ?? [];
+      final items = allHadiths
+          .map((json) => HadithItem.fromJson(json))
+          .skip(_currentStart - 1)
+          .take(_currentEnd - _currentStart + 1)
+          .toList();
 
-          final List data = responseData['data']['hadiths'];
-          
-          if (data.isEmpty) {
-            _hasReachedMax = true;
-          } else {
-            final newHadiths = data.map((json) => HadithItem.fromJson(json)).toList();
-            if (loadMore) {
-              _hadiths.addAll(newHadiths);
-            } else {
-              _hadiths = newHadiths;
-            }
-          }
-          
-          success = true;
-          _error = '';
-          break;
+      if (items.isEmpty) {
+        _hasReachedMax = true;
+      } else {
+        if (loadMore) {
+          _hadiths.addAll(items);
+        } else {
+          _hadiths = items;
         }
-      } catch (e) {
-        _error = "Error: $e";
-        debugPrint("Error fetching hadiths from $baseUrl: $e");
+        _error = '';
       }
-    }
-
-    if (!success && !loadMore) {
-      _error = "Gagal memuat hadits. Pastikan koneksi internet stabil.";
+    } catch (e) {
+      _error = 'Gagal memuat hadits lokal.';
+      debugPrint('Error loading local hadiths for $bookId: $e');
     }
 
     _isLoading = false;

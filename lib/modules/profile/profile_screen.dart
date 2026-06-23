@@ -454,12 +454,16 @@ class ProfileScreen extends StatelessWidget {
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: ListTile(
-        onTap: onTap,
-        leading: Icon(icon, color: color ?? const Color(0xFF8B7355), size: 22),
-        title: Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: color ?? theme.colorScheme.onSurface)),
-        subtitle: subtitle != null ? Text(subtitle, style: GoogleFonts.inter(fontSize: 12, color: Colors.grey)) : null,
-        trailing: trailing ?? const Icon(Icons.chevron_right, size: 20, color: Colors.grey),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        child: ListTile(
+          onTap: onTap,
+          leading: Icon(icon, color: color ?? const Color(0xFF8B7355), size: 22),
+          title: Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: color ?? theme.colorScheme.onSurface)),
+          subtitle: subtitle != null ? Text(subtitle, style: GoogleFonts.inter(fontSize: 12, color: Colors.grey)) : null,
+          trailing: trailing ?? const Icon(Icons.chevron_right, size: 20, color: Colors.grey),
+        ),
       ),
     );
   }
