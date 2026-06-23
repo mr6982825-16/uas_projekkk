@@ -1,4 +1,4 @@
-package com.example.uas_projekk
+package com.mahrus.uas_projekk
 
 import io.flutter.embedding.android.FlutterActivity
 

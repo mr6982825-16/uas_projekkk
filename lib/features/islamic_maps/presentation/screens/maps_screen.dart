@@ -168,7 +168,7 @@ class _MapsScreenState extends State<MapsScreen> {
                 children: [
                   TileLayer(
                     urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.example.uas_projekk',
+                    userAgentPackageName: 'com.mahrus.uas_projekk',
                   ),
                   MarkerLayer(markers: provider.allMarkers),
                 ],
