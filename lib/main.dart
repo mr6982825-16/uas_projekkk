@@ -18,7 +18,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize Hive
   await Hive.initFlutter();
 
@@ -33,11 +33,13 @@ void main() async {
         ChangeNotifierProvider(create: (_) => DoaHarianProvider()),
         ChangeNotifierProvider(create: (_) => DzikirProvider()),
         ChangeNotifierProvider(create: (_) => PilarIslamProvider()),
-        ChangeNotifierProvider(create: (_) {
-          var provider = DebtProvider();
-          provider.init(); // Initialize Hive box loading
-          return provider;
-        }),
+        ChangeNotifierProvider(
+          create: (_) {
+            var provider = DebtProvider();
+            provider.init(); // Initialize Hive box loading
+            return provider;
+          },
+        ),
         ChangeNotifierProvider(create: (_) => FaraidProvider()),
         ChangeNotifierProvider(create: (_) => MapsProvider()),
       ],
