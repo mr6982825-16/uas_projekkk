@@ -1,5 +1,8 @@
+import 'dart:async';
+import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_qiblah/flutter_qiblah.dart';
 import 'package:geolocator/geolocator.dart';
@@ -18,8 +21,18 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   Stream<QiblahDirection>? _qiblahStream;
+  StreamSubscription<QiblahDirection>? _qiblahSubscription;
   bool _isQiblahLoading = true;
   String? _qiblahError;
+  bool _hasSensorSupport = true;
+
+  // Smoothing & anti-wrapping fields
+  double _lastDirection = 0.0;
+  double _continuousDirection = 0.0;
+  double _smoothDirection = 0.0;
+  double? _currentDirection;
+  double? _currentQiblah;
+  bool _isFirstEvent = true;
 
   @override
   void initState() {
@@ -33,6 +46,21 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
 
   Future<void> _initializeQiblah() async {
     try {
+      if (kIsWeb) {
+        throw 'Fitur kompas kiblat memerlukan sensor fisik yang hanya tersedia di aplikasi Android/iOS.';
+      }
+
+      // Check sensor support on Android
+      if (Platform.isAndroid) {
+        final support = await FlutterQiblah.androidDeviceSensorSupport();
+        if (support == false) {
+          setState(() {
+            _hasSensorSupport = false;
+          });
+          throw 'Ponsel Anda tidak memiliki sensor magnetik (kompas) yang diperlukan untuk kompas kiblat.';
+        }
+      }
+
       final locationStatus = await FlutterQiblah.checkLocationStatus();
       if (!locationStatus.enabled) {
         throw 'GPS tidak aktif. Nyalakan GPS lalu coba lagi.';
@@ -52,8 +80,24 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
 
       _qiblahStream = FlutterQiblah.qiblahStream;
       _qiblahError = null;
+
+      _qiblahSubscription?.cancel();
+      _qiblahSubscription = _qiblahStream?.listen(
+        (qiblahDirection) {
+          _onQiblahDirectionChanged(qiblahDirection);
+        },
+        onError: (error) {
+          setState(() {
+            _qiblahError = error.toString();
+          });
+        },
+      );
     } catch (e) {
-      _qiblahError = e.toString();
+      if (e.toString().contains('MissingPluginException')) {
+        _qiblahError = 'Fitur kompas kiblat hanya didukung pada perangkat fisik Android/iOS.';
+      } else {
+        _qiblahError = e.toString();
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -63,9 +107,40 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
     }
   }
 
+  void _onQiblahDirectionChanged(QiblahDirection data) {
+    if (!mounted) return;
+
+    final newDirection = data.direction;
+
+    if (_isFirstEvent) {
+      _lastDirection = newDirection;
+      _continuousDirection = newDirection;
+      _smoothDirection = newDirection;
+      _isFirstEvent = false;
+    } else {
+      double diff = newDirection - _lastDirection;
+      if (diff < -180) {
+        diff += 360;
+      } else if (diff > 180) {
+        diff -= 360;
+      }
+      _continuousDirection += diff;
+      _lastDirection = newDirection;
+
+      // Low pass filter: alpha = 0.15 for smooth but responsive movement
+      _smoothDirection = _smoothDirection + 0.15 * (_continuousDirection - _smoothDirection);
+    }
+
+    setState(() {
+      _currentDirection = _smoothDirection;
+      _currentQiblah = data.qiblah;
+    });
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
+    _qiblahSubscription?.cancel();
     super.dispose();
   }
 
@@ -206,263 +281,426 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
   }
 
   Widget _buildKiblatTab() {
-    return SingleChildScrollView(
-      // Fixes the bottom overflow
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-        child: Column(
-          children: [
-            Text(
-              "Arah Kiblat",
-              style: GoogleFonts.inter(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF1B4332),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Consumer<PrayerProvider>(
-              builder: (context, provider, child) {
-                return Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF4FAF7),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Text(
-                    provider.hasLocation
-                        ? 'Posisi Anda: ${provider.currentPosition!.latitude.toStringAsFixed(4)}, ${provider.currentPosition!.longitude.toStringAsFixed(4)}'
-                        : 'Menunggu izin lokasi dan koordinat GPS...',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(color: const Color(0xFF0F4D3A), fontSize: 13),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 30),
-            if (_isQiblahLoading)
-              const Center(
-                child: CircularProgressIndicator(color: Color(0xFF0F4D3A)),
-              )
-            else if (_qiblahError != null)
-              Center(
-                child: Text(
-                  _qiblahError!,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(color: Colors.red, fontSize: 14),
+    return Container(
+      color: const Color(0xFF141C19),
+      constraints: const BoxConstraints.expand(),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+          child: Column(
+            children: [
+              Text(
+                "Arah Kiblat",
+                style: GoogleFonts.inter(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
-              )
-            else if (_qiblahStream == null)
-              const Center(child: Text("Tidak dapat memulai arah kiblat."))
-            else
-              StreamBuilder(
-                stream: _qiblahStream,
-                builder: (context, AsyncSnapshot<QiblahDirection> snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFF0F4D3A),
-                      ),
-                    );
-                  }
-
-                  if (snapshot.hasError) {
-                    return Center(child: Text("Error: ${snapshot.error}"));
-                  }
-
-                  final qiblahDirection = snapshot.data;
-                  if (qiblahDirection == null) {
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        child: Text(
-                          'Menunggu pembacaan sensor kompas...\nGerakkan ponsel perlahan untuk mengaktifkan arah kiblat.',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.inter(color: Colors.grey[700], fontSize: 13),
-                        ),
-                      ),
-                    );
-                  }
+              ),
+              const SizedBox(height: 20),
+              Consumer<PrayerProvider>(
+                builder: (context, provider, child) {
+                  return Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.white.withOpacity(0.1)),
+                    ),
+                    child: Text(
+                      provider.hasLocation
+                          ? 'Posisi Anda: ${provider.currentPosition!.latitude.toStringAsFixed(4)}, ${provider.currentPosition!.longitude.toStringAsFixed(4)}'
+                          : 'Menunggu izin lokasi dan koordinat GPS...',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(color: const Color(0xFF52D395), fontSize: 13),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 20),
+              Consumer<PrayerProvider>(
+                builder: (context, provider, child) {
+                  if (!provider.hasLocation) return const SizedBox.shrink();
+                  final locationLabel = [
+                    provider.city.isNotEmpty ? provider.city : null,
+                    provider.province.isNotEmpty ? provider.province : null,
+                    provider.country.isNotEmpty ? provider.country : null,
+                  ].whereType<String>().where((value) => value.isNotEmpty).join(', ');
 
                   return Column(
                     children: [
-                      Consumer<PrayerProvider>(
-                        builder: (context, provider, child) {
-                          return Text(
-                            'Sudut kiblat: ${provider.qiblaBearing.toStringAsFixed(1)}°',
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF0F4D3A),
-                            ),
-                          );
-                        },
+                      Text(
+                        'Sudut kiblat: ${provider.qiblaBearing.toStringAsFixed(1)}°',
+                        style: GoogleFonts.inter(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF52D395),
+                        ),
                       ),
-                      const SizedBox(height: 20),
-                      Consumer<PrayerProvider>(
-                        builder: (context, provider, child) {
-                          final locationLabel = [
-                            provider.city.isNotEmpty ? provider.city : null,
-                            provider.province.isNotEmpty ? provider.province : null,
-                            provider.country.isNotEmpty ? provider.country : null,
-                          ].whereType<String>().where((value) => value.isNotEmpty).join(', ');
-
-                          return Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF4FAF7),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              locationLabel.isNotEmpty
-                                  ? locationLabel
-                                  : 'Menunggu lokasi saat ini...',
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.inter(
-                                color: const Color(0xFF0F4D3A),
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        width: 300,
-                        height: 300,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            // Outer compass dial (fixed)
-                            Container(
-                              width: 300,
-                              height: 300,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: const Color(0xFFD4E5E1),
-                                  width: 10,
-                                ),
-                                color: const Color(0xFFF8FBFB),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 10,
-                                    spreadRadius: 2,
-                                  )
-                                ],
-                              ),
-                            ),
-                            Positioned(
-                              top: 20,
-                              child: Text('U', style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.redAccent)),
-                            ),
-                            Positioned(
-                              bottom: 20,
-                              child: Text('S', style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold, color: const Color(0xFF0F4D3A))),
-                            ),
-                            Positioned(
-                              left: 20,
-                              child: Text('B', style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold, color: const Color(0xFF0F4D3A))),
-                            ),
-                            Positioned(
-                              right: 20,
-                              child: Text('T', style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold, color: const Color(0xFF0F4D3A))),
-                            ),
-                            
-                            // Compass needle that points to Qibla
-                            Transform.rotate(
-                              angle: (qiblahDirection.qiblah * (math.pi / 180)),
-                              child: SizedBox(
-                                width: 250,
-                                height: 250,
-                                child: Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    // The needle (Jarum Kompas)
-                                    Positioned(
-                                      top: 40,
-                                      child: Container(
-                                        width: 8,
-                                        height: 85,
-                                        decoration: const BoxDecoration(
-                                          color: Color(0xFF0F4D3A),
-                                          borderRadius: BorderRadius.only(
-                                            topLeft: Radius.circular(10),
-                                            topRight: Radius.circular(10),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    // The bottom counter-balance of the needle
-                                    Positioned(
-                                      bottom: 60,
-                                      child: Container(
-                                        width: 8,
-                                        height: 65,
-                                        decoration: const BoxDecoration(
-                                          color: Colors.grey,
-                                          borderRadius: BorderRadius.only(
-                                            bottomLeft: Radius.circular(10),
-                                            bottomRight: Radius.circular(10),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    // The Kaaba Icon at the tip of the needle
-                                    const Positioned(
-                                      top: 5,
-                                      child: Text('🕋', style: TextStyle(fontSize: 32)),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            // Center pin of the needle
-                            Container(
-                              width: 24,
-                              height: 24,
-                              decoration: const BoxDecoration(
-                                color: Colors.orangeAccent,
-                                shape: BoxShape.circle,
-                                boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)],
-                              ),
-                            ),
-                            Container(
-                              width: 10,
-                              height: 10,
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ],
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white.withOpacity(0.1)),
+                        ),
+                        child: Text(
+                          locationLabel.isNotEmpty ? locationLabel : 'Menghitung lokasi...',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ],
                   );
                 },
               ),
-            const SizedBox(height: 50),
-            Text(
-              "Hadapkan ponsel Anda ke arah yang benar untuk menemukan kiblat.",
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(color: Colors.grey, fontSize: 13),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              "Gerakkan ponsel membentuk angka '8' untuk kalibrasi.",
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                color: const Color(0xFF0F4D3A),
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
+              const SizedBox(height: 25),
+              if (_isQiblahLoading)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: CircularProgressIndicator(color: Color(0xFF52D395)),
+                  ),
+                )
+              else if (_qiblahError != null || _qiblahStream == null)
+                Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      margin: const EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
+                      ),
+                      child: Text(
+                        _qiblahError ?? "Sensor kompas tidak terdeteksi pada perangkat ini.",
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(color: Colors.red[300], fontSize: 13),
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                    Consumer<PrayerProvider>(
+                      builder: (context, provider, child) {
+                        final bearing = provider.hasLocation ? provider.qiblaBearing : 295.0;
+                        return SizedBox(
+                          width: 250,
+                          height: 250,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              CustomPaint(
+                                size: const Size(250, 250),
+                                painter: KiblatCompassPainter(
+                                  qiblaBearing: bearing,
+                                ),
+                              ),
+                              Positioned(
+                                left: 125 + 100 * math.cos((bearing - 90) * math.pi / 180) - 17.5,
+                                top: 125 + 100 * math.sin((bearing - 90) * math.pi / 180) - 17.5,
+                                child: Transform.rotate(
+                                  angle: bearing * math.pi / 180,
+                                  child: Image.asset(
+                                    'assets/icon/kaaba.png',
+                                    width: 35,
+                                    height: 35,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Text(
+                                        '🕋',
+                                        style: TextStyle(fontSize: 26),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                )
+              else if (_currentDirection == null || _currentQiblah == null)
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 40),
+                    child: Column(
+                      children: [
+                        const CircularProgressIndicator(
+                          color: Color(0xFF52D395),
+                        ),
+                        const SizedBox(height: 15),
+                        Text(
+                          'Menunggu pembacaan sensor kompas...\nGerakkan ponsel perlahan untuk mengaktifkan arah kiblat.',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                Transform.rotate(
+                  angle: (-_currentDirection! * (math.pi / 180)),
+                  child: SizedBox(
+                    width: 300,
+                    height: 300,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        CustomPaint(
+                          size: const Size(300, 300),
+                          painter: KiblatCompassPainter(
+                            qiblaBearing: _currentQiblah!,
+                          ),
+                        ),
+                        Positioned(
+                          left: 150 + 120 * math.cos((_currentQiblah! - 90) * math.pi / 180) - 22.5,
+                          top: 150 + 120 * math.sin((_currentQiblah! - 90) * math.pi / 180) - 22.5,
+                          child: Transform.rotate(
+                            angle: _currentQiblah! * math.pi / 180,
+                            child: Image.asset(
+                              'assets/icon/kaaba.png',
+                              width: 45,
+                              height: 45,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Text(
+                                  '🕋',
+                                  style: TextStyle(fontSize: 32),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 50),
+              Text(
+                "Hadapkan ponsel Anda ke arah yang benar untuk menemukan kiblat.",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 13),
               ),
-            ),
-          ],
+              const SizedBox(height: 10),
+              Text(
+                "Gerakkan ponsel membentuk angka '8' untuk kalibrasi.",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF52D395),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
+
+class KiblatCompassPainter extends CustomPainter {
+  final double qiblaBearing;
+
+  KiblatCompassPainter({required this.qiblaBearing});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = math.min(size.width, size.height) / 2;
+
+    // 1. Draw outer green ring
+    final greenPaint = Paint()
+      ..color = const Color(0xFF0F9B58)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(center, radius, greenPaint);
+
+    // 2. Draw white dial
+    final whitePaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+    final whiteRadius = radius - 12;
+    canvas.drawCircle(center, whiteRadius, whitePaint);
+
+    // 3. Draw inner map circle (light green/teal)
+    final innerRadius = whiteRadius - 28;
+    final mapRadius = innerRadius - 10;
+    
+    canvas.save();
+    final mapClipPath = Path()
+      ..addOval(Rect.fromCircle(center: center, radius: mapRadius));
+    canvas.clipPath(mapClipPath);
+
+    // Fill map background
+    final mapBgPaint = Paint()
+      ..color = const Color(0xFFCBECE1)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(center, mapRadius, mapBgPaint);
+
+    // Draw grid lines (street map style)
+    final gridPaint = Paint()
+      ..color = Colors.white.withOpacity(0.6)
+      ..strokeWidth = 3.0
+      ..style = PaintingStyle.stroke;
+
+    final spacing = 25.0;
+    final maxDist = mapRadius * 1.5;
+    for (double i = -maxDist; i <= maxDist; i += spacing) {
+      canvas.drawLine(
+        Offset(center.dx + i - mapRadius, center.dy - mapRadius),
+        Offset(center.dx + i + mapRadius, center.dy + mapRadius),
+        gridPaint,
+      );
+      canvas.drawLine(
+        Offset(center.dx + i + mapRadius, center.dy - mapRadius),
+        Offset(center.dx + i - mapRadius, center.dy + mapRadius),
+        gridPaint,
+      );
+    }
+    canvas.restore();
+
+    // 4. Draw ticks on the white dial
+    final tickOuterRadius = whiteRadius - 5;
+    final tickInnerShort = tickOuterRadius - 8;
+    final tickInnerLong = tickOuterRadius - 14;
+
+    final tickPaint = Paint()
+      ..color = const Color(0xFF0F263E)
+      ..style = PaintingStyle.stroke;
+
+    for (int i = 0; i < 72; i++) {
+      final angleDegrees = i * 5.0;
+      final angleRadians = (angleDegrees - 90) * math.pi / 180;
+      
+      final isLong = (i % 6 == 0);
+      final innerR = isLong ? tickInnerLong : tickInnerShort;
+      
+      tickPaint.strokeWidth = isLong ? 2.0 : 1.0;
+      
+      final start = Offset(
+        center.dx + tickOuterRadius * math.cos(angleRadians),
+        center.dy + tickOuterRadius * math.sin(angleRadians),
+      );
+      final end = Offset(
+        center.dx + innerR * math.cos(angleRadians),
+        center.dy + innerR * math.sin(angleRadians),
+      );
+      canvas.drawLine(start, end, tickPaint);
+    }
+
+    // 5. Draw text directions (N, E, S, W)
+    final textStyle = TextStyle(
+      color: const Color(0xFF0F263E),
+      fontWeight: FontWeight.bold,
+      fontSize: 20,
+      fontFamily: 'Inter',
+    );
+
+    final textDirections = {
+      'N': 0.0,
+      'E': 90.0,
+      'S': 180.0,
+      'W': 270.0,
+    };
+
+    final textDist = tickInnerLong - 16;
+
+    textDirections.forEach((text, angleDegrees) {
+      final angleRadians = (angleDegrees - 90) * math.pi / 180;
+      final textPainter = TextPainter(
+        text: TextSpan(text: text, style: textStyle),
+        textDirection: TextDirection.ltr,
+      );
+      textPainter.layout();
+
+      final textCenter = Offset(
+        center.dx + textDist * math.cos(angleRadians),
+        center.dy + textDist * math.sin(angleRadians),
+      );
+
+      canvas.save();
+      canvas.translate(textCenter.dx, textCenter.dy);
+      canvas.rotate(angleDegrees * math.pi / 180);
+
+      textPainter.paint(
+        canvas,
+        Offset(-textPainter.width / 2, -textPainter.height / 2),
+      );
+      canvas.restore();
+    });
+
+    // 6. Draw dashed line towards Qiblah
+    final qiblaAngleRad = (qiblaBearing - 90) * math.pi / 180;
+    final linePaint = Paint()
+      ..color = Colors.red
+      ..strokeWidth = 2.5
+      ..style = PaintingStyle.stroke;
+
+    final startDist = 30.0;
+    final endDist = tickOuterRadius - 8;
+    
+    final dashLength = 6.0;
+    final gapLength = 6.0;
+    double currentDist = startDist;
+    while (currentDist < endDist) {
+      final dStart = currentDist;
+      final dEnd = math.min(currentDist + dashLength, endDist);
+      
+      final pStart = Offset(
+        center.dx + dStart * math.cos(qiblaAngleRad),
+        center.dy + dStart * math.sin(qiblaAngleRad),
+      );
+      final pEnd = Offset(
+        center.dx + dEnd * math.cos(qiblaAngleRad),
+        center.dy + dEnd * math.sin(qiblaAngleRad),
+      );
+      
+      canvas.drawLine(pStart, pEnd, linePaint);
+      currentDist += dashLength + gapLength;
+    }
+
+    // 7. Draw red arrow in the center (pointing to Qibla)
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.rotate(qiblaBearing * math.pi / 180);
+
+    // Left half (light red):
+    final leftPath = Path()
+      ..moveTo(0, -42)
+      ..lineTo(-16, 12)
+      ..lineTo(0, 0)
+      ..close();
+    
+    final leftPaint = Paint()
+      ..color = const Color(0xFFFF4D4D)
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(leftPath, leftPaint);
+
+    // Right half (dark red):
+    final rightPath = Path()
+      ..moveTo(0, -42)
+      ..lineTo(16, 12)
+      ..lineTo(0, 0)
+      ..close();
+    
+    final rightPaint = Paint()
+      ..color = const Color(0xFFD6241D)
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(rightPath, rightPaint);
+
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant KiblatCompassPainter oldDelegate) {
+    return oldDelegate.qiblaBearing != qiblaBearing;
+  }
+}
+
+

@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:uas_projekk/core/theme.dart';
 import 'package:uas_projekk/modules/profile/settings_provider.dart';
 import 'package:uas_projekk/modules/profile/about_screen.dart';
@@ -16,6 +18,17 @@ class ProfileScreen extends StatelessWidget {
     if (!await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication)) {
       throw Exception('Could not launch $url');
     }
+  }
+
+  ImageProvider _getProfileImage(String path) {
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return NetworkImage(path);
+    }
+    final file = File(path);
+    if (file.existsSync()) {
+      return FileImage(file);
+    }
+    return const NetworkImage("https://i.pravatar.cc/150?u=pilarislam");
   }
 
   void _showLogoutDialog(BuildContext context) {
@@ -114,7 +127,7 @@ class ProfileScreen extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 50,
-                backgroundImage: NetworkImage(settings.profilePicUrl),
+                backgroundImage: _getProfileImage(settings.profilePicUrl),
                 backgroundColor: Colors.white,
               ),
               InkWell(
@@ -200,35 +213,60 @@ class ProfileScreen extends StatelessWidget {
   }
 
   void _showEditPicDialog(BuildContext context, SettingsProvider settings) {
-    final controller = TextEditingController(text: settings.profilePicUrl);
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text("Ubah Foto Profil", style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      builder: (context) => SafeArea(
+        child: Wrap(
           children: [
-            const Text("Masukkan URL foto profil baru Anda:"),
-            const SizedBox(height: 10),
-            TextField(
-              controller: controller,
-              decoration: const InputDecoration(hintText: "https://example.com/image.jpg"),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+              child: Text(
+                "Ubah Foto Profil",
+                style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
             ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: Color(0xFF0F4D3A)),
+              title: Text("Pilih dari Galeri", style: GoogleFonts.inter()),
+              onTap: () async {
+                Navigator.pop(context);
+                final picker = ImagePicker();
+                final image = await picker.pickImage(source: ImageSource.gallery);
+                if (image != null) {
+                  settings.updateProfilePic(image.path);
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: Color(0xFF0F4D3A)),
+              title: Text("Ambil Foto dari Kamera", style: GoogleFonts.inter()),
+              onTap: () async {
+                Navigator.pop(context);
+                final picker = ImagePicker();
+                final image = await picker.pickImage(source: ImageSource.camera);
+                if (image != null) {
+                  settings.updateProfilePic(image.path);
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.restore, color: Colors.grey),
+              title: Text("Gunakan Foto Default", style: GoogleFonts.inter()),
+              onTap: () {
+                Navigator.pop(context);
+                settings.updateProfilePic("https://i.pravatar.cc/150?u=pilarislam");
+              },
+            ),
+            const SizedBox(height: 10),
           ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Batal")),
-          ElevatedButton(
-            onPressed: () {
-              if (controller.text.isNotEmpty) {
-                settings.updateProfilePic(controller.text);
-                Navigator.pop(context);
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0F4D3A)),
-            child: const Text("Simpan", style: TextStyle(color: Colors.white)),
-          ),
-        ],
       ),
     );
   }
