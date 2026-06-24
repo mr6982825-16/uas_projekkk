@@ -12,7 +12,6 @@ import 'package:uas_projekk/modules/dzikir/doa_harian_screen.dart';
 import 'package:uas_projekk/modules/profile/settings_provider.dart';
 import 'package:uas_projekk/features/debt_tracker/presentation/screens/debt_dashboard_screen.dart';
 import 'package:uas_projekk/features/faraid_calculator/presentation/screens/faraid_wizard_screen.dart';
-import 'package:uas_projekk/features/islamic_maps/presentation/screens/maps_screen.dart';
 
 class FeaturesDashboardScreen extends StatelessWidget {
   const FeaturesDashboardScreen({super.key});
@@ -285,9 +284,6 @@ class FeaturesDashboardScreen extends StatelessWidget {
           }),
           _buildFeatureCard(Icons.calculate_outlined, "Kalkulator Waris", "Faraid Smart System", theme, settings, () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const FaraidWizardScreen()));
-          }),
-          _buildFeatureCard(Icons.map_outlined, "Peta Islami", "Masjid & Restoran Halal", theme, settings, () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const MapsScreen()));
           }),
         ],
       ),

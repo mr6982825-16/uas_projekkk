@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:uas_projekk/modules/hadith/hadith_data.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:dio/dio.dart';
 
 class HadithBook {
   final String name;
@@ -84,6 +85,7 @@ class FavoriteHadithItem {
 
 class HadithProvider extends ChangeNotifier {
   final String _favBoxName = 'favorite_hadiths';
+  final Dio _dio = Dio();
 
   List<HadithBook> _books = [];
   List<HadithItem> _hadiths = [];
@@ -122,27 +124,60 @@ class HadithProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Fetch all books (offline)
+  // Fetch all books (online, fallback to offline)
   Future<void> fetchBooks() async {
-    if (_books.isNotEmpty) return;
-
     _isLoading = true;
     _error = '';
     notifyListeners();
 
     try {
-      _books = hadithBooksData.map((json) => HadithBook.fromJson(json)).toList();
+      // 1. Initialize with local data first so the UI doesn't remain blank
+      final localBooks = hadithBooksData.map((json) => HadithBook.fromJson(json)).toList();
+      _books = localBooks;
+
+      // 2. Try fetching from online API to update totals
+      final response = await _dio.get('https://hadis-api-id.vercel.app/hadith').timeout(const Duration(seconds: 8));
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        final onlineBooks = data.map((json) {
+          final slug = json['slug'] ?? '';
+          final name = json['name'] ?? '';
+          final total = int.tryParse(json['total'].toString()) ?? 0;
+          return HadithBook(
+            id: slug,
+            name: name,
+            available: total,
+          );
+        }).toList();
+
+        // Merge: keep local ones not in online data (e.g. arbain-nawawi, riyadush-shalihin)
+        final mergedBooks = <HadithBook>[];
+        for (var local in localBooks) {
+          final online = onlineBooks.firstWhere(
+            (o) => o.id == local.id,
+            orElse: () => HadithBook(id: '', name: '', available: 0),
+          );
+          if (online.id.isNotEmpty) {
+            mergedBooks.add(online);
+          } else {
+            mergedBooks.add(local);
+          }
+        }
+        _books = mergedBooks;
+      }
       _error = '';
     } catch (e) {
-      _error = 'Gagal memuat daftar kitab.';
-      debugPrint('Error loading offline hadith books: $e');
+      debugPrint('Error loading online books, using cached/offline data: $e');
+      if (_books.isEmpty) {
+        _books = hadithBooksData.map((json) => HadithBook.fromJson(json)).toList();
+      }
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  // Fetch hadiths with pagination (offline)
+  // Fetch hadiths with pagination (online, fallback to offline)
   Future<void> fetchHadiths(String bookId, {bool loadMore = false}) async {
     if (loadMore) {
       if (_isFetchingMore || _hasReachedMax) return;
@@ -159,32 +194,100 @@ class HadithProvider extends ChangeNotifier {
       notifyListeners();
     }
 
-    try {
-      // Local offline hadith pagination
-      final allHadiths = hadithItemsByBook[bookId] ?? [];
-      final pageSize = 20;
-      final startIndex = loadMore ? _currentPage * pageSize : 0;
+    final localOnly = bookId == 'arbain-nawawi' || bookId == 'riyadush-shalihin';
 
-      final items = allHadiths
-          .map((json) => HadithItem.fromJson(Map<String, dynamic>.from(json)))
-          .skip(startIndex)
-          .take(pageSize)
-          .toList();
+    if (localOnly) {
+      try {
+        final allHadiths = hadithItemsByBook[bookId] ?? [];
+        final pageSize = 20;
+        final startIndex = loadMore ? _currentPage * pageSize : 0;
 
-      if (items.isEmpty) {
-        _hasReachedMax = true;
-      } else {
-        if (loadMore) {
-          _hadiths.addAll(items);
-          _currentPage = _currentPage + 1;
+        final items = allHadiths
+            .map((json) => HadithItem.fromJson(Map<String, dynamic>.from(json)))
+            .skip(startIndex)
+            .take(pageSize)
+            .toList();
+
+        if (items.isEmpty) {
+          _hasReachedMax = true;
         } else {
-          _hadiths = items;
+          if (loadMore) {
+            _hadiths.addAll(items);
+            _currentPage = _currentPage + 1;
+          } else {
+            _hadiths = items;
+            _currentPage = 2;
+          }
+          _error = '';
         }
-        _error = '';
+      } catch (e) {
+        _error = 'Gagal memuat hadits.';
+        debugPrint('Error loading offline hadiths for $bookId: $e');
+      } finally {
+        _isLoading = false;
+        _isFetchingMore = false;
+        notifyListeners();
+      }
+      return;
+    }
+
+    try {
+      final limit = 20;
+      final page = _currentPage;
+      final url = 'https://hadis-api-id.vercel.app/hadith/$bookId?page=$page&limit=$limit';
+      
+      final response = await _dio.get(url).timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        final data = response.data;
+        final List<dynamic> itemsJson = data['items'] ?? [];
+        
+        final items = itemsJson.map((json) => HadithItem.fromJson(Map<String, dynamic>.from(json))).toList();
+        
+        if (items.isEmpty) {
+          _hasReachedMax = true;
+        } else {
+          if (loadMore) {
+            _hadiths.addAll(items);
+            _currentPage = _currentPage + 1;
+          } else {
+            _hadiths = items;
+            _currentPage = 2;
+          }
+          _error = '';
+        }
+      } else {
+        throw Exception('API returned status code ${response.statusCode}');
       }
     } catch (e) {
-      _error = 'Gagal memuat hadits.';
-      debugPrint('Error loading hadiths for $bookId: $e');
+      debugPrint('Error loading online hadiths for $bookId, falling back to local: $e');
+      // FALLBACK TO OFFLINE
+      try {
+        final allHadiths = hadithItemsByBook[bookId] ?? [];
+        final pageSize = 20;
+        final startIndex = loadMore ? _currentPage * pageSize : 0;
+
+        final items = allHadiths
+            .map((json) => HadithItem.fromJson(Map<String, dynamic>.from(json)))
+            .skip(startIndex)
+            .take(pageSize)
+            .toList();
+
+        if (items.isEmpty) {
+          _hasReachedMax = true;
+        } else {
+          if (loadMore) {
+            _hadiths.addAll(items);
+            _currentPage = _currentPage + 1;
+          } else {
+            _hadiths = items;
+            _currentPage = 2;
+          }
+          _error = '';
+        }
+      } catch (err) {
+        _error = 'Gagal memuat hadits.';
+        debugPrint('Error in fallback: $err');
+      }
     } finally {
       _isLoading = false;
       _isFetchingMore = false;
@@ -192,29 +295,70 @@ class HadithProvider extends ChangeNotifier {
     }
   }
 
-  // Fetch a single Hadith by its number (offline)
+  // Fetch a single Hadith by its number (online, fallback to offline)
   Future<void> fetchSingleHadith(String bookId, int number) async {
     _isSearchingSingle = true;
     _searchedHadith = null;
     _searchError = '';
     notifyListeners();
 
-    try {
-      final allHadiths = hadithItemsByBook[bookId] ?? [];
-      final found = allHadiths.firstWhere(
-        (h) => (h['number'] as int) == number,
-        orElse: () => {},
-      );
+    final localOnly = bookId == 'arbain-nawawi' || bookId == 'riyadush-shalihin';
 
-      if (found.isNotEmpty) {
-        _searchedHadith = HadithItem.fromJson(Map<String, dynamic>.from(found));
+    if (localOnly) {
+      try {
+        final allHadiths = hadithItemsByBook[bookId] ?? [];
+        final found = allHadiths.firstWhere(
+          (h) => (h['number'] as int) == number,
+          orElse: () => {},
+        );
+
+        if (found.isNotEmpty) {
+          _searchedHadith = HadithItem.fromJson(Map<String, dynamic>.from(found));
+          _searchError = '';
+        } else {
+          _searchError = 'Hadist nomor $number tidak ditemukan.';
+        }
+      } catch (e) {
+        _searchError = 'Hadist nomor $number tidak ditemukan atau terjadi kesalahan.';
+        debugPrint('Error fetching single hadith offline: $e');
+      } finally {
+        _isSearchingSingle = false;
+        notifyListeners();
+      }
+      return;
+    }
+
+    try {
+      final url = 'https://hadis-api-id.vercel.app/hadith/$bookId/$number';
+      final response = await _dio.get(url).timeout(const Duration(seconds: 8));
+      
+      if (response.statusCode == 200) {
+        final data = response.data;
+        _searchedHadith = HadithItem.fromJson(Map<String, dynamic>.from(data));
         _searchError = '';
       } else {
-        _searchError = 'Hadist nomor $number tidak ditemukan.';
+        throw Exception('API returned status code ${response.statusCode}');
       }
     } catch (e) {
-      _searchError = 'Hadist nomor $number tidak ditemukan atau terjadi kesalahan.';
-      debugPrint('Error fetching single hadith: $e');
+      debugPrint('Error fetching single hadith online: $e, falling back to local');
+      // FALLBACK TO OFFLINE
+      try {
+        final allHadiths = hadithItemsByBook[bookId] ?? [];
+        final found = allHadiths.firstWhere(
+          (h) => (h['number'] as int) == number,
+          orElse: () => {},
+        );
+
+        if (found.isNotEmpty) {
+          _searchedHadith = HadithItem.fromJson(Map<String, dynamic>.from(found));
+          _searchError = '';
+        } else {
+          _searchError = 'Hadist nomor $number tidak ditemukan.';
+        }
+      } catch (err) {
+        _searchError = 'Hadist nomor $number tidak ditemukan atau terjadi kesalahan.';
+        debugPrint('Error in fallback: $err');
+      }
     } finally {
       _isSearchingSingle = false;
       notifyListeners();
