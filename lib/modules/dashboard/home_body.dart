@@ -220,56 +220,56 @@ class HomeBody extends StatelessWidget {
                 )
               ],
             ),
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: settings.isDarkMode ? Colors.white10 : const Color(0xFFFDF7E7),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    _getIconData(niat.icon),
-                    color: const Color(0xFFC19E4A),
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(height: 15),
-                Text(
-                  niat.nama,
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 25),
-                Expanded(
-                  child: Center(
-                    child: Text(
-                      niat.arab,
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.amiri(
-                        fontSize: settings.arabicFontSize + 4,
-                        height: 2.2,
-                        fontWeight: FontWeight.bold,
-                        color: settings.isDarkMode ? const Color(0xFF4DB6AC) : const Color(0xFF0F4D3A),
-                      ),
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: settings.isDarkMode ? Colors.white10 : const Color(0xFFFDF7E7),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      _getIconData(niat.icon),
+                      color: const Color(0xFFC19E4A),
+                      size: 20,
                     ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  "\"${niat.latin}\"",
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontStyle: FontStyle.italic,
-                    color: theme.colorScheme.onSurface.withOpacity(0.6),
-                    height: 1.5,
+                  const SizedBox(height: 10),
+                  Text(
+                    niat.nama,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: theme.colorScheme.onSurface,
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  Text(
+                    niat.arab,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.amiri(
+                      fontSize: settings.arabicFontSize + 1,
+                      height: 2.0,
+                      fontWeight: FontWeight.bold,
+                      color: settings.isDarkMode ? const Color(0xFF4DB6AC) : const Color(0xFF0F4D3A),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    "\"${niat.latin}\"",
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         },
@@ -344,12 +344,15 @@ class HomeBody extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Expanded(
-                  child: Text(
-                    item["description"] as String,
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
-                      height: 1.5,
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Text(
+                      item["description"] as String,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        height: 1.5,
+                      ),
                     ),
                   ),
                 ),
@@ -371,7 +374,7 @@ class HomeBody extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(25),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: settings.isDarkMode
@@ -422,38 +425,42 @@ class HomeBody extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 12),
           Text(
             mainDoa.title,
             style: GoogleFonts.inter(
               color: Colors.white,
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Text(
             mainDoa.translation,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
               color: Colors.white70,
-              fontSize: 12,
+              fontSize: 11,
               height: 1.4,
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 15),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                isCompleted ? "Alhamdulillah, Selesai!" : "Kemajuan: $count / ${mainDoa.target}",
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
+              Expanded(
+                child: Text(
+                  isCompleted ? "Alhamdulillah, Selesai!" : "Kemajuan: $count / ${mainDoa.target}",
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 10),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
@@ -544,36 +551,41 @@ class HomeBody extends StatelessWidget {
           },
           borderRadius: BorderRadius.circular(25),
           child: Padding(
-            padding: const EdgeInsets.all(25),
+            padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          doa.category.toUpperCase(),
-                          style: GoogleFonts.inter(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                            color: AppTheme.textGrey,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            doa.category.toUpperCase(),
+                            style: GoogleFonts.inter(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.2,
+                              color: AppTheme.textGrey,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 5),
-                        Text(
-                          doa.title,
-                          style: GoogleFonts.inter(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.onSurface,
+                          const SizedBox(height: 5),
+                          Text(
+                            doa.title,
+                            style: GoogleFonts.inter(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.onSurface,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 15),
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
@@ -584,7 +596,7 @@ class HomeBody extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 15),
                 Align(
                   alignment: Alignment.centerRight,
                   child: Text(
@@ -598,7 +610,7 @@ class HomeBody extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 15),
                 _buildCardCounter(context, doa, settings, theme, provider),
                 if (settings.showTranslation) ...[
                   const SizedBox(height: 15),
@@ -637,51 +649,60 @@ class HomeBody extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: isCompleted
-                    ? const Color(0xFF4CAF50).withOpacity(0.1)
-                    : (settings.isDarkMode ? Colors.white10 : const Color(0xFFF0F4F2)),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isCompleted ? const Color(0xFF4CAF50).withOpacity(0.3) : Colors.transparent,
-                ),
-              ),
-              child: Row(
-                children: [
-                  if (isCompleted)
-                    const Icon(Icons.check, size: 14, color: Color(0xFF4CAF50))
-                  else
-                    Icon(Icons.fingerprint, size: 14, color: settings.isDarkMode ? Colors.white60 : const Color(0xFF0F4D3A)),
-                  const SizedBox(width: 6),
-                  Text(
-                    isCompleted ? 'Selesai' : 'Dibaca: $count / ${doa.target}',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: isCompleted ? const Color(0xFF4CAF50) : (settings.isDarkMode ? Colors.white70 : AppTheme.textGrey),
+        Expanded(
+          child: Row(
+            children: [
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isCompleted
+                        ? const Color(0xFF4CAF50).withOpacity(0.1)
+                        : (settings.isDarkMode ? Colors.white10 : const Color(0xFFF0F4F2)),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isCompleted ? const Color(0xFF4CAF50).withOpacity(0.3) : Colors.transparent,
                     ),
                   ),
-                ],
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (isCompleted)
+                        const Icon(Icons.check, size: 14, color: Color(0xFF4CAF50))
+                      else
+                        Icon(Icons.fingerprint, size: 14, color: settings.isDarkMode ? Colors.white60 : const Color(0xFF0F4D3A)),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          isCompleted ? 'Selesai' : 'Dibaca: $count / ${doa.target}',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: isCompleted ? const Color(0xFF4CAF50) : (settings.isDarkMode ? Colors.white70 : AppTheme.textGrey),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-            if (count > 0) ...[
-              const SizedBox(width: 8),
-              IconButton(
-                constraints: const BoxConstraints(),
-                padding: EdgeInsets.zero,
-                icon: const Icon(Icons.refresh, size: 18, color: Colors.grey),
-                onPressed: () {
-                  HapticFeedback.mediumImpact();
-                  provider.resetCount(doa.id);
-                },
-              ),
+              if (count > 0) ...[
+                const SizedBox(width: 8),
+                IconButton(
+                  constraints: const BoxConstraints(),
+                  padding: EdgeInsets.zero,
+                  icon: const Icon(Icons.refresh, size: 18, color: Colors.grey),
+                  onPressed: () {
+                    HapticFeedback.mediumImpact();
+                    provider.resetCount(doa.id);
+                  },
+                ),
+              ],
             ],
-          ],
+          ),
         ),
+        const SizedBox(width: 10),
         if (!isCompleted)
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(

@@ -5,11 +5,11 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:uas_projekk/core/theme.dart';
 import 'package:uas_projekk/modules/profile/settings_provider.dart';
 import 'package:uas_projekk/modules/profile/about_screen.dart';
 import 'package:uas_projekk/modules/profile/feedback_screen.dart';
 import 'package:uas_projekk/modules/dzikir/doa_harian_screen.dart';
+import 'package:uas_projekk/modules/profile/adhan_sound_selector.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -147,12 +147,15 @@ class ProfileScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                settings.userName,
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
+              Flexible(
+                child: Text(
+                  settings.userName,
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: 8),
@@ -192,6 +195,7 @@ class ProfileScreen extends StatelessWidget {
         title: Text("Ubah Nama", style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
         content: TextField(
           controller: controller,
+          maxLength: 12,
           decoration: const InputDecoration(hintText: "Masukkan nama baru"),
           autofocus: true,
         ),
@@ -199,8 +203,11 @@ class ProfileScreen extends StatelessWidget {
           TextButton(onPressed: () => Navigator.pop(context), child: const Text("Batal")),
           ElevatedButton(
             onPressed: () {
-              if (controller.text.isNotEmpty) {
-                settings.updateUserName(controller.text);
+              final trimmedName = controller.text.trim();
+              if (trimmedName.isNotEmpty) {
+                settings.updateUserName(
+                  trimmedName.substring(0, trimmedName.length > 12 ? 12 : trimmedName.length),
+                );
                 Navigator.pop(context);
               }
             },
@@ -408,6 +415,14 @@ class ProfileScreen extends StatelessWidget {
       children: [
         _buildSettingsTile(Icons.my_location, "Lokasi Pengguna", theme, subtitle: "Jakarta, Indonesia", trailing: const Icon(Icons.sync, size: 20, color: Color(0xFF0F4D3A))),
         _buildSwitchTile(Icons.notifications_active_outlined, "Notifikasi Adzan", settings.isAdhanNotifEnabled, (val) => settings.toggleAdhanNotif(val), theme),
+        if (settings.isAdhanNotifEnabled)
+          _buildSettingsTile(
+            Icons.music_note_outlined,
+            "Pilih Suara Adzan",
+            theme,
+            subtitle: _getAdhanSoundName(settings.selectedAdhanSoundId),
+            onTap: () => _showAdhanSoundSelector(context),
+          ),
         _buildSwitchTile(Icons.alarm, "Pengingat Dzikir", settings.isDzikirNotifEnabled, (val) => settings.toggleDzikirNotif(val), theme),
       ],
     );
@@ -520,6 +535,34 @@ class ProfileScreen extends StatelessWidget {
         activeColor: const Color(0xFF0F4D3A),
         onChanged: onChanged,
       ),
+    );
+  }
+
+  String _getAdhanSoundName(String soundId) {
+    switch (soundId) {
+      case 'makkah':
+        return 'Adzan Makkah (Populer)';
+      case 'madinah':
+        return 'Adzan Madinah (Syahdu)';
+      case 'alaqsa':
+        return 'Adzan Al-Aqsa';
+      case 'egypt':
+        return 'Adzan Mesir (Melodi Indah)';
+      case 'turkey':
+        return 'Adzan Turki';
+      case 'yusuf_islam':
+        return 'Adzan Yusuf Islam';
+      default:
+        return 'Adzan Makkah (Populer)';
+    }
+  }
+
+  void _showAdhanSoundSelector(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const AdhanSoundSelectorSheet(),
     );
   }
 }

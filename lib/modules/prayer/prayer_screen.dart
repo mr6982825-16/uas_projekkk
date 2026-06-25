@@ -131,10 +131,94 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
       _smoothDirection = _smoothDirection + 0.15 * (_continuousDirection - _smoothDirection);
     }
 
+    final absoluteQiblah = (data.qiblah + data.direction) % 360;
+
     setState(() {
       _currentDirection = _smoothDirection;
-      _currentQiblah = data.qiblah;
+      _currentQiblah = absoluteQiblah;
     });
+  }
+
+  void _showCalibrationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF141C19),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: const Color(0xFF52D395).withOpacity(0.2), width: 1.5),
+          ),
+          title: Row(
+            children: [
+              const Icon(Icons.compass_calibration, color: Color(0xFF52D395)),
+              const SizedBox(width: 10),
+              Text(
+                "Kalibrasi Kompas",
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 10),
+              Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF52D395).withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.gesture,
+                    size: 60,
+                    color: Color(0xFF52D395),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                "Cara Menghilangkan Gangguan & Kalibrasi:",
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                "1. Pegang ponsel Anda dengan kokoh di tangan.\n"
+                "2. Gerakkan/putar ponsel di udara membentuk lintasan angka '8' (infinity ♾️) secara berulang.\n"
+                "3. Jauhkan ponsel dari benda logam, casing bermagnet, atau barang elektronik lain (laptop, speaker) agar arah lebih akurat.",
+                style: GoogleFonts.inter(
+                  color: Colors.white.withOpacity(0.8),
+                  fontSize: 13,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                "Tutup",
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF52D395),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -263,10 +347,14 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            name,
-            style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16),
+          Expanded(
+            child: Text(
+              name,
+              style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
+          const SizedBox(width: 10),
           Text(
             time,
             style: GoogleFonts.inter(
@@ -388,38 +476,47 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                     Consumer<PrayerProvider>(
                       builder: (context, provider, child) {
                         final bearing = provider.hasLocation ? provider.qiblaBearing : 295.0;
-                        return SizedBox(
-                          width: 250,
-                          height: 250,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              CustomPaint(
-                                size: const Size(250, 250),
-                                painter: KiblatCompassPainter(
-                                  qiblaBearing: bearing,
-                                ),
-                              ),
-                              Positioned(
-                                left: 125 + 100 * math.cos((bearing - 90) * math.pi / 180) - 17.5,
-                                top: 125 + 100 * math.sin((bearing - 90) * math.pi / 180) - 17.5,
-                                child: Transform.rotate(
-                                  angle: bearing * math.pi / 180,
-                                  child: Image.asset(
-                                    'assets/icon/kaaba.png',
-                                    width: 35,
-                                    height: 35,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return const Text(
-                                        '🕋',
-                                        style: TextStyle(fontSize: 26),
-                                      );
-                                    },
+                        return LayoutBuilder(
+                          builder: (context, constraints) {
+                            final compassSize = math.min(250.0, constraints.maxWidth);
+                            final centerOffset = compassSize / 2;
+                            final iconRadius = (compassSize / 2 - 12) - 18.0;
+                            final iconSize = compassSize * 0.14;
+
+                            return SizedBox(
+                              width: compassSize,
+                              height: compassSize,
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  CustomPaint(
+                                    size: Size(compassSize, compassSize),
+                                    painter: KiblatCompassPainter(
+                                      qiblaBearing: bearing,
+                                    ),
                                   ),
-                                ),
+                                  Positioned(
+                                    left: centerOffset + iconRadius * math.cos((bearing - 90) * math.pi / 180) - (iconSize / 2),
+                                    top: centerOffset + iconRadius * math.sin((bearing - 90) * math.pi / 180) - (iconSize / 2),
+                                    child: Transform.rotate(
+                                      angle: bearing * math.pi / 180,
+                                      child: Image.asset(
+                                        'assets/icon/kaaba.png',
+                                        width: iconSize,
+                                        height: iconSize,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Text(
+                                            '🕋',
+                                            style: TextStyle(fontSize: iconSize * 0.7),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
+                            );
+                          },
                         );
                       },
                     ),
@@ -445,41 +542,50 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                   ),
                 )
               else
-                Transform.rotate(
-                  angle: (-_currentDirection! * (math.pi / 180)),
-                  child: SizedBox(
-                    width: 300,
-                    height: 300,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        CustomPaint(
-                          size: const Size(300, 300),
-                          painter: KiblatCompassPainter(
-                            qiblaBearing: _currentQiblah!,
-                          ),
-                        ),
-                        Positioned(
-                          left: 150 + 120 * math.cos((_currentQiblah! - 90) * math.pi / 180) - 22.5,
-                          top: 150 + 120 * math.sin((_currentQiblah! - 90) * math.pi / 180) - 22.5,
-                          child: Transform.rotate(
-                            angle: _currentQiblah! * math.pi / 180,
-                            child: Image.asset(
-                              'assets/icon/kaaba.png',
-                              width: 45,
-                              height: 45,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Text(
-                                  '🕋',
-                                  style: TextStyle(fontSize: 32),
-                                );
-                              },
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final compassSize = math.min(300.0, constraints.maxWidth);
+                    final centerOffset = compassSize / 2;
+                    final iconRadius = (compassSize / 2 - 12) - 18.0;
+                    final iconSize = compassSize * 0.15;
+
+                    return Transform.rotate(
+                      angle: (-_currentDirection! * (math.pi / 180)),
+                      child: SizedBox(
+                        width: compassSize,
+                        height: compassSize,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            CustomPaint(
+                              size: Size(compassSize, compassSize),
+                              painter: KiblatCompassPainter(
+                                qiblaBearing: _currentQiblah!,
+                              ),
                             ),
-                          ),
+                            Positioned(
+                              left: centerOffset + iconRadius * math.cos((_currentQiblah! - 90) * math.pi / 180) - (iconSize / 2),
+                              top: centerOffset + iconRadius * math.sin((_currentQiblah! - 90) * math.pi / 180) - (iconSize / 2),
+                              child: Transform.rotate(
+                                angle: _currentQiblah! * math.pi / 180,
+                                child: Image.asset(
+                                  'assets/icon/kaaba.png',
+                                  width: iconSize,
+                                  height: iconSize,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Text(
+                                      '🕋',
+                                      style: TextStyle(fontSize: iconSize * 0.7),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
+                      ),
+                    );
+                  },
                 ),
               const SizedBox(height: 50),
               Text(
@@ -488,13 +594,38 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                 style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 13),
               ),
               const SizedBox(height: 10),
-              Text(
-                "Gerakkan ponsel membentuk angka '8' untuk kalibrasi.",
-                textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
-                  color: const Color(0xFF52D395),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
+              GestureDetector(
+                onTap: () => _showCalibrationDialog(context),
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF52D395).withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFF52D395).withOpacity(0.2)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.info_outline,
+                          size: 14,
+                          color: Color(0xFF52D395),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          "Gerakkan ponsel membentuk angka '8' untuk kalibrasi. (Klik untuk bantuan)",
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.inter(
+                            color: const Color(0xFF52D395),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],

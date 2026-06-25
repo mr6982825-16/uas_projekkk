@@ -7,6 +7,7 @@ class SettingsProvider extends ChangeNotifier {
   bool _showTranslation = true;
   bool _isAdhanNotifEnabled = true;
   bool _isDzikirNotifEnabled = true;
+  String _selectedAdhanSoundId = 'makkah';
   
   String _userName = "M.rusdi";
   String _profilePicUrl = "https://i.pravatar.cc/150?u=pilarislam";
@@ -30,6 +31,7 @@ class SettingsProvider extends ChangeNotifier {
   bool get showTranslation => _showTranslation;
   bool get isAdhanNotifEnabled => _isAdhanNotifEnabled;
   bool get isDzikirNotifEnabled => _isDzikirNotifEnabled;
+  String get selectedAdhanSoundId => _selectedAdhanSoundId;
   String get userName => _userName;
   String get profilePicUrl => _profilePicUrl;
   
@@ -48,6 +50,9 @@ class SettingsProvider extends ChangeNotifier {
     _isDarkMode = prefs.getBool('isDarkMode') ?? false;
     _arabicFontSize = prefs.getDouble('arabicFontSize') ?? 28.0;
     _showTranslation = prefs.getBool('showTranslation') ?? true;
+    _isAdhanNotifEnabled = prefs.getBool('isAdhanNotifEnabled') ?? true;
+    _isDzikirNotifEnabled = prefs.getBool('isDzikirNotifEnabled') ?? true;
+    _selectedAdhanSoundId = prefs.getString('selectedAdhanSoundId') ?? 'makkah';
     _userName = prefs.getString('userName') ?? "M.rusdi";
     _profilePicUrl = prefs.getString('profilePicUrl') ?? "https://i.pravatar.cc/150?u=pilarislam";
     _totalDoaRead = prefs.getInt('totalDoaRead') ?? 1240;
@@ -66,6 +71,9 @@ class SettingsProvider extends ChangeNotifier {
     await prefs.setBool('isDarkMode', _isDarkMode);
     await prefs.setDouble('arabicFontSize', _arabicFontSize);
     await prefs.setBool('showTranslation', _showTranslation);
+    await prefs.setBool('isAdhanNotifEnabled', _isAdhanNotifEnabled);
+    await prefs.setBool('isDzikirNotifEnabled', _isDzikirNotifEnabled);
+    await prefs.setString('selectedAdhanSoundId', _selectedAdhanSoundId);
     await prefs.setString('userName', _userName);
     await prefs.setString('profilePicUrl', _profilePicUrl);
     await prefs.setInt('totalDoaRead', _totalDoaRead);
@@ -98,11 +106,19 @@ class SettingsProvider extends ChangeNotifier {
 
   void toggleAdhanNotif(bool value) {
     _isAdhanNotifEnabled = value;
+    _saveToPrefs();
     notifyListeners();
   }
 
   void toggleDzikirNotif(bool value) {
     _isDzikirNotifEnabled = value;
+    _saveToPrefs();
+    notifyListeners();
+  }
+
+  void setSelectedAdhanSoundId(String id) {
+    _selectedAdhanSoundId = id;
+    _saveToPrefs();
     notifyListeners();
   }
 
