@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:uas_projekk/core/notifications/prayer_notification_service.dart';
 import 'package:uas_projekk/modules/quran/quran_screen.dart';
 import 'package:uas_projekk/modules/dashboard/home_body.dart';
 import 'package:uas_projekk/modules/tools/features_dashboard_screen.dart';
@@ -33,6 +36,91 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: _pages,
           ),
           _buildFloatingBottomNav(),
+          Consumer<PrayerNotificationService>(
+            builder: (context, notifService, child) {
+              if (!notifService.isPlayingAdhan) return const SizedBox.shrink();
+              return Positioned(
+                top: 50,
+                left: 20,
+                right: 20,
+                child: Material(
+                  elevation: 8,
+                  borderRadius: BorderRadius.circular(20),
+                  color: const Color(0xFF0F4D3A),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: const Color(0xFFD4AF37).withOpacity(0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFD4AF37).withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.notifications_active,
+                            color: Color(0xFFD4AF37),
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 15),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                "Panggilan Adzan",
+                                style: GoogleFonts.inter(
+                                  color: const Color(0xFFD4AF37),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                "Sedang mengumandangkan Adzan ${notifService.playingPrayerName}",
+                                style: GoogleFonts.inter(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => notifService.stopAdhan(),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFFF4D4D),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          ),
+                          child: Text(
+                            "Matikan",
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
         ],
       ),
     );

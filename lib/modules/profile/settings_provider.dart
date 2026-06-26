@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uas_projekk/core/notifications/prayer_notification_service.dart';
 
 class SettingsProvider extends ChangeNotifier {
   bool _isDarkMode = false;
@@ -108,6 +109,7 @@ class SettingsProvider extends ChangeNotifier {
     _isAdhanNotifEnabled = value;
     _saveToPrefs();
     notifyListeners();
+    PrayerNotificationService().reschedule();
   }
 
   void toggleDzikirNotif(bool value) {
@@ -120,6 +122,7 @@ class SettingsProvider extends ChangeNotifier {
     _selectedAdhanSoundId = id;
     _saveToPrefs();
     notifyListeners();
+    PrayerNotificationService().reschedule();
   }
 
   void updateUserName(String newName) {

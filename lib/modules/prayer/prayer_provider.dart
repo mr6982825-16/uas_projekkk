@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
+import 'package:uas_projekk/core/notifications/prayer_notification_service.dart';
 
 class PrayerTimes {
   final String fajr;
@@ -84,6 +85,11 @@ class PrayerProvider extends ChangeNotifier {
       if (response.statusCode == 200) {
         _prayerTimes = PrayerTimes.fromJson(response.data['data']);
         _address = 'Lokasi Anda (GPS Aktif)';
+        
+        // Schedule background notifications and start foreground timer
+        final notifService = PrayerNotificationService();
+        notifService.scheduleBackgroundNotifications(_prayerTimes!);
+        notifService.startTimer(this);
       }
     } catch (e) {
       debugPrint('Error fetching prayer times: $e');

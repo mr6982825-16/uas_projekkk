@@ -14,12 +14,17 @@ import 'package:uas_projekk/features/pilar_islam/logic/pilar_islam_provider.dart
 import 'package:uas_projekk/features/debt_tracker/presentation/providers/debt_provider.dart';
 import 'package:uas_projekk/features/faraid_calculator/presentation/providers/faraid_provider.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:uas_projekk/core/notifications/prayer_notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Hive
   await Hive.initFlutter();
+
+  // Initialize Notifications
+  final notificationService = PrayerNotificationService();
+  await notificationService.init();
 
   runApp(
     MultiProvider(
@@ -40,6 +45,7 @@ void main() async {
           },
         ),
         ChangeNotifierProvider(create: (_) => FaraidProvider()),
+        ChangeNotifierProvider.value(value: notificationService),
       ],
       child: const MyApp(),
     ),
