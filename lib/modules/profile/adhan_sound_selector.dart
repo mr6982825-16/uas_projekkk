@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -27,37 +28,37 @@ class AdhanSoundSelectorSheet extends StatefulWidget {
       id: 'makkah',
       name: 'Adzan Makkah (Populer)',
       muadhin: 'Masjidil Haram (Syaikh Ali Mulla)',
-      url: 'https://www.islamcan.com/audio/adhan/azan1.mp3',
+      url: 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan.mp3',
     ),
     AdhanSound(
       id: 'madinah',
       name: 'Adzan Madinah (Syahdu)',
       muadhin: 'Masjid Nabawi (Syaikh Abdul Majid)',
-      url: 'https://www.islamcan.com/audio/adhan/azan2.mp3',
+      url: 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan_fajr.mp3',
     ),
     AdhanSound(
       id: 'alaqsa',
       name: 'Adzan Al-Aqsa',
       muadhin: 'Masjid Al-Aqsa (Yerusalem)',
-      url: 'https://www.islamcan.com/audio/adhan/azan5.mp3',
+      url: 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan.mp3',
     ),
     AdhanSound(
       id: 'egypt',
       name: 'Adzan Mesir (Melodi Indah)',
       muadhin: 'Syaikh Abdul Basit Abdus Samad',
-      url: 'https://www.islamcan.com/audio/adhan/azan6.mp3',
+      url: 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan.mp3',
     ),
     AdhanSound(
       id: 'turkey',
       name: 'Adzan Turki',
       muadhin: 'Gaya Klasik Kekaisaran Turki Usmani',
-      url: 'https://www.islamcan.com/audio/adhan/azan7.mp3',
+      url: 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan.mp3',
     ),
     AdhanSound(
       id: 'yusuf_islam',
       name: 'Adzan Yusuf Islam',
       muadhin: 'Yusuf Islam (Cat Stevens)',
-      url: 'https://www.islamcan.com/audio/adhan/azan3.mp3',
+      url: 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan_fajr.mp3',
     ),
   ];
 
@@ -74,6 +75,8 @@ class _AdhanSoundSelectorSheetState extends State<AdhanSoundSelectorSheet> {
   void initState() {
     super.initState();
     _audioPlayer = AudioPlayer();
+    
+    // Listen to player state changes
     _audioPlayer.onPlayerStateChanged.listen((state) {
       if (state == PlayerState.playing) {
         if (mounted) {
@@ -81,19 +84,15 @@ class _AdhanSoundSelectorSheetState extends State<AdhanSoundSelectorSheet> {
             _isLoading = false;
           });
         }
-      } else if (state == PlayerState.completed || state == PlayerState.stopped) {
-        if (mounted) {
-          setState(() {
-            _playingSoundId = null;
-            _isLoading = false;
-          });
-        }
-      } else if (state == PlayerState.paused) {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
+      }
+    });
+
+    _audioPlayer.onPlayerComplete.listen((event) {
+      if (mounted) {
+        setState(() {
+          _playingSoundId = null;
+          _isLoading = false;
+        });
       }
     });
   }
@@ -119,8 +118,29 @@ class _AdhanSoundSelectorSheetState extends State<AdhanSoundSelectorSheet> {
           _isLoading = true;
         });
         await _audioPlayer.stop();
+        
         final playUrl = kIsWeb ? 'https://corsproxy.io/?${sound.url}' : sound.url;
-        await _audioPlayer.play(UrlSource(playUrl));
+
+        // Local asset path mapping
+        final String localPath = sound.id == 'madinah' || sound.id == 'yusuf_islam'
+            ? 'audio/azan2.mp3'
+            : 'audio/azan1.mp3';
+
+        bool localExists = false;
+        try {
+          await rootBundle.load('assets/$localPath');
+          localExists = true;
+        } catch (_) {
+          localExists = false;
+        }
+
+        if (localExists) {
+          debugPrint("Playing preview from local asset: $localPath");
+          await _audioPlayer.play(AssetSource(localPath));
+        } else {
+          debugPrint("Playing preview from remote URL: $playUrl");
+          await _audioPlayer.play(UrlSource(playUrl));
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -129,8 +149,8 @@ class _AdhanSoundSelectorSheetState extends State<AdhanSoundSelectorSheet> {
           _isLoading = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Gagal memutar audio: Periksa koneksi internet Anda"),
+          SnackBar(
+            content: Text("Gagal memutar audio: $e"),
             backgroundColor: Colors.redAccent,
           ),
         );

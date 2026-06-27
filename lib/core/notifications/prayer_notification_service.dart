@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uas_projekk/modules/prayer/prayer_provider.dart';
@@ -23,12 +24,12 @@ class PrayerNotificationService extends ChangeNotifier {
   String get playingPrayerName => _playingPrayerName;
 
   static const Map<String, String> adhanSounds = {
-    'makkah': 'https://www.islamcan.com/audio/adhan/azan1.mp3',
-    'madinah': 'https://www.islamcan.com/audio/adhan/azan2.mp3',
-    'alaqsa': 'https://www.islamcan.com/audio/adhan/azan5.mp3',
-    'egypt': 'https://www.islamcan.com/audio/adhan/azan6.mp3',
-    'turkey': 'https://www.islamcan.com/audio/adhan/azan7.mp3',
-    'yusuf_islam': 'https://www.islamcan.com/audio/adhan/azan3.mp3',
+    'makkah': 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan.mp3',
+    'madinah': 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan_fajr.mp3',
+    'alaqsa': 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan.mp3',
+    'egypt': 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan.mp3',
+    'turkey': 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan.mp3',
+    'yusuf_islam': 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan_fajr.mp3',
   };
 
   Future<void> init() async {
@@ -64,15 +65,33 @@ class PrayerNotificationService extends ChangeNotifier {
       if (!isEnabled) return;
 
       final rawUrl = adhanSounds[soundId] ?? adhanSounds['makkah']!;
-      // Use CORS proxy for Web to avoid audio loading issues
       final playUrl = kIsWeb ? 'https://corsproxy.io/?$rawUrl' : rawUrl;
+
+      // Local asset mapping fallback
+      final String localPath = soundId == 'madinah' || soundId == 'yusuf_islam'
+          ? 'audio/azan2.mp3'
+          : 'audio/azan1.mp3';
 
       await _audioPlayer.stop();
       _isPlayingAdhan = true;
       _playingPrayerName = prayerName;
       notifyListeners();
 
-      await _audioPlayer.play(UrlSource(playUrl));
+      bool localExists = false;
+      try {
+        await rootBundle.load('assets/$localPath');
+        localExists = true;
+      } catch (_) {
+        localExists = false;
+      }
+
+      if (localExists) {
+        debugPrint("Playing adhan from local asset: $localPath");
+        await _audioPlayer.play(AssetSource(localPath));
+      } else {
+        debugPrint("Playing adhan from remote URL: $playUrl");
+        await _audioPlayer.play(UrlSource(playUrl));
+      }
       
       // Also trigger a system notification immediately
       await _notificationHelper.showInstantNotification(

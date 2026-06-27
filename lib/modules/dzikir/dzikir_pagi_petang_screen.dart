@@ -31,6 +31,7 @@ class _DzikirPagiPetangScreenState extends State<DzikirPagiPetangScreen> with Si
   bool _showLatin = true;
   bool _showTranslation = true;
   bool _isPlaying = false;
+  bool _isLoadingAudio = false;
   Map<String, int> _counts = {};
 
   @override
@@ -49,6 +50,27 @@ class _DzikirPagiPetangScreenState extends State<DzikirPagiPetangScreen> with Si
       });
     });
 
+    // Listen to player state changes
+    _audioPlayer.onPlayerStateChanged.listen((state) {
+      if (mounted) {
+        setState(() {
+          _isPlaying = state == PlayerState.playing;
+          if (state == PlayerState.playing || state == PlayerState.stopped || state == PlayerState.completed) {
+            _isLoadingAudio = false;
+          }
+        });
+      }
+    });
+
+    _audioPlayer.onPlayerComplete.listen((event) {
+      if (mounted) {
+        setState(() {
+          _isPlaying = false;
+          _isLoadingAudio = false;
+        });
+      }
+    });
+
     // Fetch data from API
     Future.microtask(() => context.read<DzikirProvider>().fetchDzikirData());
   }
@@ -61,24 +83,45 @@ class _DzikirPagiPetangScreenState extends State<DzikirPagiPetangScreen> with Si
     super.dispose();
   }
 
-  void _toggleAudio(String audioPath) async {
+  void _toggleAudio(String audioPath, String remoteUrl) async {
     try {
       if (_isPlaying) {
         await _audioPlayer.stop();
-        setState(() => _isPlaying = false);
-      } else {
-        await _audioPlayer.play(AssetSource(audioPath));
-        setState(() => _isPlaying = true);
-        
-        _audioPlayer.onPlayerComplete.listen((event) {
-          if (mounted) setState(() => _isPlaying = false);
+        setState(() {
+          _isPlaying = false;
+          _isLoadingAudio = false;
         });
+      } else {
+        setState(() {
+          _isLoadingAudio = true;
+        });
+
+        bool localExists = false;
+        try {
+          // Check if the local asset exists
+          await rootBundle.load('assets/$audioPath');
+          localExists = true;
+        } catch (_) {
+          localExists = false;
+        }
+
+        if (localExists) {
+          debugPrint("Playing audio from local asset: $audioPath");
+          await _audioPlayer.play(AssetSource(audioPath));
+        } else {
+          debugPrint("Playing audio from remote URL: $remoteUrl");
+          await _audioPlayer.play(UrlSource(remoteUrl));
+        }
       }
     } catch (e) {
       debugPrint("Error playing audio: $e");
       if (mounted) {
+        setState(() {
+          _isPlaying = false;
+          _isLoadingAudio = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("File audio $audioPath tidak ditemukan")),
+          SnackBar(content: Text("Gagal memutar audio: $e")),
         );
       }
     }
@@ -109,13 +152,28 @@ class _DzikirPagiPetangScreenState extends State<DzikirPagiPetangScreen> with Si
       appBar: AppBar(
         title: Text("Dzikir", style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
         actions: [
-          IconButton(
-            icon: Icon(_isPlaying ? Icons.stop_circle : Icons.play_circle_outline),
-            onPressed: () {
-              final path = _tabController.index == 0 ? 'audio/dzikir_pagi.mp3' : 'audio/dzikir_petang.mp3';
-              _toggleAudio(path);
-            },
-          ),
+          _isLoadingAudio
+              ? const SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: Padding(
+                    padding: EdgeInsets.all(12.0),
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  ),
+                )
+              : IconButton(
+                  icon: Icon(_isPlaying ? Icons.stop_circle : Icons.play_circle_outline),
+                  onPressed: () {
+                    final path = _tabController.index == 0 ? 'audio/dzikir_pagi.mp3' : 'audio/dzikir_petang.mp3';
+                    final url = _tabController.index == 0
+                        ? 'https://raw.githubusercontent.com/aageboi/mp3/master/dzikir-pagi.mp3'
+                        : 'https://raw.githubusercontent.com/aageboi/mp3/master/Mishaari%20Raashid%20al-Afaasee%20-%20Dzikir%20Rutin%20Di%20Sore%20Hari.mp3';
+                    _toggleAudio(path, url);
+                  },
+                ),
           IconButton(
             icon: Icon(Icons.translate, color: _showTranslation ? Colors.white : Colors.white38),
             onPressed: () => setState(() => _showTranslation = !_showTranslation),
