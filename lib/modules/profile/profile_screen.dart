@@ -528,12 +528,16 @@ class ProfileScreen extends StatelessWidget {
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: SwitchListTile(
-        secondary: Icon(icon, color: const Color(0xFF8B7355), size: 22),
-        title: Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: theme.colorScheme.onSurface)),
-        value: value,
-        activeColor: const Color(0xFF0F4D3A),
-        onChanged: onChanged,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        child: SwitchListTile(
+          secondary: Icon(icon, color: const Color(0xFF8B7355), size: 22),
+          title: Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: theme.colorScheme.onSurface)),
+          value: value,
+          activeColor: const Color(0xFF0F4D3A),
+          onChanged: onChanged,
+        ),
       ),
     );
   }

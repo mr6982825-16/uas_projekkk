@@ -24,7 +24,7 @@ void main() async {
 
   // Initialize Notifications
   final notificationService = PrayerNotificationService();
-  await notificationService.init();
+  notificationService.init();
 
   runApp(
     MultiProvider(

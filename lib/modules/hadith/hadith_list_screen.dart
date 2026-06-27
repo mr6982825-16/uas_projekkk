@@ -268,39 +268,43 @@ class _HadithListScreenState extends State<HadithListScreen> {
         ],
         border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        leading: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF1F7F5),
-            borderRadius: BorderRadius.circular(12),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          leading: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F7F5),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.book_outlined,
+              color: Color(0xFF1B4332),
+              size: 20,
+            ),
           ),
-          child: const Icon(
-            Icons.book_outlined,
-            color: Color(0xFF1B4332),
-            size: 20,
+          title: Text(
+            book.name,
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: theme.colorScheme.onSurface,
+            ),
           ),
-        ),
-        title: Text(
-          book.name,
-          style: GoogleFonts.inter(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-            color: theme.colorScheme.onSurface,
+          subtitle: Text(
+            "${book.available} Riwayat",
+            style: GoogleFonts.inter(fontSize: 12, color: Colors.grey),
           ),
+          trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => HadithDetailListScreen(book: book)),
+            );
+          },
         ),
-        subtitle: Text(
-          "${book.available} Riwayat",
-          style: GoogleFonts.inter(fontSize: 12, color: Colors.grey),
-        ),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => HadithDetailListScreen(book: book)),
-          );
-        },
       ),
     );
   }

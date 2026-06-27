@@ -222,81 +222,83 @@ class _AdhanSoundSelectorSheetState extends State<AdhanSoundSelectorSheet> {
                               : theme.dividerColor.withOpacity(0.05),
                         ),
                       ),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        onTap: () {
-                          settings.setSelectedAdhanSoundId(sound.id);
-                        },
-                        leading: GestureDetector(
-                          onTap: () => _togglePlay(sound),
-                          child: Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: isThisPlaying
-                                  ? const Color(0xFF0F4D3A)
-                                  : (isDark ? Colors.white10 : const Color(0xFFF1F7F5)),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Center(
-                              child: _isLoading && isThisPlaying
-                                  ? SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2.5,
-                                        valueColor: AlwaysStoppedAnimation<Color>(
-                                          isThisPlaying ? Colors.white : const Color(0xFF0F4D3A),
+                      child: Material(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(20),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          onTap: () {
+                            settings.setSelectedAdhanSoundId(sound.id);
+                          },
+                          leading: GestureDetector(
+                            onTap: () => _togglePlay(sound),
+                            child: Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: isThisPlaying
+                                    ? const Color(0xFF0F4D3A)
+                                    : (isDark ? Colors.white10 : const Color(0xFFF1F7F5)),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: _isLoading && isThisPlaying
+                                    ? SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.5,
+                                          valueColor: AlwaysStoppedAnimation<Color>(
+                                            isThisPlaying ? Colors.white : const Color(0xFF0F4D3A),
+                                          ),
                                         ),
+                                      )
+                                    : Icon(
+                                        isThisPlaying ? Icons.stop_rounded : Icons.play_arrow_rounded,
+                                        color: isThisPlaying
+                                            ? Colors.white
+                                            : const Color(0xFF0F4D3A),
                                       ),
-                                    )
-                                  : Icon(
-                                      isThisPlaying ? Icons.stop_rounded : Icons.play_arrow_rounded,
-                                      color: isThisPlaying
-                                          ? Colors.white
-                                          : const Color(0xFF0F4D3A),
-                                      size: 24,
-                                    ),
+                              ),
                             ),
                           ),
-                        ),
-                        title: Text(
-                          sound.name,
-                          style: GoogleFonts.inter(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                            color: theme.colorScheme.onSurface,
+                          title: Text(
+                            sound.name,
+                            style: GoogleFonts.inter(
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                              color: theme.colorScheme.onSurface,
+                            ),
                           ),
-                        ),
-                        subtitle: Text(
-                          sound.muadhin,
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            color: Colors.grey[600],
+                          subtitle: Text(
+                            sound.muadhin,
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
                           ),
-                        ),
-                        trailing: Container(
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: isSelected
-                                ? const Color(0xFF0F4D3A)
-                                : Colors.transparent,
-                            border: Border.all(
+                          trailing: Container(
+                            width: 24,
+                            height: 24,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
                               color: isSelected
                                   ? const Color(0xFF0F4D3A)
-                                  : Colors.grey.withOpacity(0.5),
-                              width: 2,
+                                  : Colors.transparent,
+                              border: Border.all(
+                                color: isSelected
+                                    ? const Color(0xFF0F4D3A)
+                                    : Colors.grey.withOpacity(0.5),
+                                width: 2,
+                              ),
                             ),
+                            child: isSelected
+                                ? const Icon(
+                                    Icons.check,
+                                    color: Colors.white,
+                                    size: 14,
+                                  )
+                                : null,
                           ),
-                          child: isSelected
-                              ? const Icon(
-                                  Icons.check,
-                                  color: Colors.white,
-                                  size: 14,
-                                )
-                              : null,
                         ),
                       ),
                     );
