@@ -120,8 +120,10 @@ class PrayerNotificationService extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final isEnabled = prefs.getBool('isAdhanNotifEnabled') ?? true;
 
-    // First, clear all previous scheduled alarms
-    await _notificationHelper.cancelAllNotifications();
+    // First, clear only previous scheduled prayer alarms (IDs 1-5) to avoid wiping Dzikir notifications (ID 99)
+    for (int i = 1; i <= 5; i++) {
+      await _notificationHelper.cancel(i);
+    }
 
     if (!isEnabled) return;
 

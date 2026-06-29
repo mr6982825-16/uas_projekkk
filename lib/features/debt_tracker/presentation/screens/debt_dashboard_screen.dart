@@ -110,7 +110,7 @@ class _DebtDashboardScreenState extends State<DebtDashboardScreen> {
       children: [
         Expanded(
           child: Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
             decoration: BoxDecoration(
               color: const Color(0xFFFDECEA), // Soft Red
               borderRadius: BorderRadius.circular(20),
@@ -119,19 +119,25 @@ class _DebtDashboardScreenState extends State<DebtDashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Icon(Icons.arrow_downward, color: Colors.red[700], size: 16),
-                    const SizedBox(width: 5),
-                    Text("Total Utang Saya", style: GoogleFonts.inter(fontSize: 12, color: Colors.red[800], fontWeight: FontWeight.bold)),
-                  ],
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Row(
+                    children: [
+                      Icon(Icons.arrow_downward, color: Colors.red[700], size: 16),
+                      const SizedBox(width: 5),
+                      Text("Total Utang Saya", style: GoogleFonts.inter(fontSize: 12, color: Colors.red[800], fontWeight: FontWeight.bold)),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 10),
-                Text(
-                  _currencyFormat.format(provider.totalDebt),
-                  style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red[900]),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    _currencyFormat.format(provider.totalDebt),
+                    style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red[900]),
+                  ),
                 ),
               ],
             ),
@@ -140,7 +146,7 @@ class _DebtDashboardScreenState extends State<DebtDashboardScreen> {
         const SizedBox(width: 15),
         Expanded(
           child: Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
             decoration: BoxDecoration(
               color: const Color(0xFFE8F5E9), // Soft Green
               borderRadius: BorderRadius.circular(20),
@@ -149,19 +155,25 @@ class _DebtDashboardScreenState extends State<DebtDashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Icon(Icons.arrow_upward, color: Colors.green[700], size: 16),
-                    const SizedBox(width: 5),
-                    Text("Total Piutang", style: GoogleFonts.inter(fontSize: 12, color: Colors.green[800], fontWeight: FontWeight.bold)),
-                  ],
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Row(
+                    children: [
+                      Icon(Icons.arrow_upward, color: Colors.green[700], size: 16),
+                      const SizedBox(width: 5),
+                      Text("Total Piutang", style: GoogleFonts.inter(fontSize: 12, color: Colors.green[800], fontWeight: FontWeight.bold)),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 10),
-                Text(
-                  _currencyFormat.format(provider.totalReceivable),
-                  style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green[900]),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    _currencyFormat.format(provider.totalReceivable),
+                    style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green[900]),
+                  ),
                 ),
               ],
             ),
@@ -237,23 +249,72 @@ class _DebtDashboardScreenState extends State<DebtDashboardScreen> {
                 ),
               ),
               const SizedBox(height: 5),
-              InkWell(
-                onTap: () => provider.togglePaidStatus(debt),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: isPast ? Colors.grey.withOpacity(0.2) : theme.primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    isPast ? "Batalkan" : "Tandai Lunas",
-                    style: GoogleFonts.inter(
-                      fontSize: 10, 
-                      fontWeight: FontWeight.bold,
-                      color: isPast ? Colors.grey[700] : theme.primaryColor,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  InkWell(
+                    onTap: () => provider.togglePaidStatus(debt),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isPast ? Colors.grey.withOpacity(0.2) : theme.primaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        isPast ? "Batalkan" : "Tandai Lunas",
+                        style: GoogleFonts.inter(
+                          fontSize: 10, 
+                          fontWeight: FontWeight.bold,
+                          color: isPast ? Colors.grey[700] : theme.primaryColor,
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                          title: Text(
+                            "Hapus Catatan",
+                            style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
+                          ),
+                          content: Text(
+                            "Apakah Anda yakin ingin menghapus catatan '${debt.name}' ini?",
+                            style: GoogleFonts.inter(color: theme.colorScheme.onSurface.withOpacity(0.8)),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              child: Text("Batal", style: GoogleFonts.inter(color: Colors.grey)),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                provider.deleteDebt(debt);
+                                Navigator.pop(ctx);
+                              },
+                              child: Text("Hapus", style: GoogleFonts.inter(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.delete_outline,
+                        size: 14,
+                        color: Colors.red,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

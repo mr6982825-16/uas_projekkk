@@ -614,13 +614,14 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                           color: Color(0xFF52D395),
                         ),
                         const SizedBox(width: 6),
-                        Text(
-                          "Gerakkan ponsel membentuk angka '8' untuk kalibrasi. (Klik untuk bantuan)",
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.inter(
-                            color: const Color(0xFF52D395),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 11,
+                        Flexible(
+                          child: Text(
+                            "Gerakkan ponsel membentuk angka '8' untuk kalibrasi. (Klik untuk bantuan)",
+                            style: GoogleFonts.inter(
+                              color: const Color(0xFF52D395),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11,
+                            ),
                           ),
                         ),
                       ],

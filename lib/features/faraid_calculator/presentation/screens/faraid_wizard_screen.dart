@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -50,6 +51,20 @@ class _FaraidWizardScreenState extends State<FaraidWizardScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Tidak ada utang aktif yang tercatat.")),
+      );
+    }
+  }
+
+  void _useActiveReceivable(FaraidProvider faraidProvider, DebtProvider debtProvider) {
+    if (debtProvider.totalReceivable > 0) {
+      faraidProvider.addAsset(AssetModel(
+        name: "Penambahan Piutang Aktif", 
+        value: debtProvider.totalReceivable, 
+        category: "Uang"
+      ));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Tidak ada piutang aktif yang tercatat.")),
       );
     }
   }
@@ -187,6 +202,7 @@ class _FaraidWizardScreenState extends State<FaraidWizardScreen> {
               child: TextFormField(
                 controller: _assetValueController,
                 keyboardType: TextInputType.number,
+                inputFormatters: [IndonesianThousandsFormatter()],
                 decoration: InputDecoration(
                   hintText: "Nominal (Rp)",
                   filled: true,
@@ -207,25 +223,50 @@ class _FaraidWizardScreenState extends State<FaraidWizardScreen> {
         ),
         const SizedBox(height: 15),
         
-        // Import Debt Button
-        InkWell(
-          onTap: () => _useActiveDebt(provider, debtProvider),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.red.withOpacity(0.3)),
+        // Import Actions (Debt / Receivable)
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            InkWell(
+              onTap: () => _useActiveDebt(provider, debtProvider),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.red.withOpacity(0.3)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 18),
+                    const SizedBox(width: 8),
+                    Text("Kurangi dengan Utang Aktif", style: GoogleFonts.inter(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
+                  ],
+                ),
+              ),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 18),
-                const SizedBox(width: 8),
-                Text("Kurangi dengan Utang Aktif", style: GoogleFonts.inter(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
-              ],
+            InkWell(
+              onTap: () => _useActiveReceivable(provider, debtProvider),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.green.withOpacity(0.3)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.add_chart_outlined, color: Colors.green, size: 18),
+                    const SizedBox(width: 8),
+                    Text("Tambahkan Piutang Aktif", style: GoogleFonts.inter(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 12)),
+                  ],
+                ),
+              ),
             ),
-          ),
+          ],
         ),
         
         const SizedBox(height: 20),
@@ -486,6 +527,30 @@ class _FaraidWizardScreenState extends State<FaraidWizardScreen> {
           ),
         )
       ],
+    );
+  }
+}
+
+class IndonesianThousandsFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    if (newValue.text.isEmpty) {
+      return newValue;
+    }
+    
+    // Remove all non-digits
+    String clean = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (clean.isEmpty) {
+      return newValue.copyWith(text: '', selection: const TextSelection.collapsed(offset: 0));
+    }
+    
+    final value = int.parse(clean);
+    final formatter = NumberFormat.decimalPattern('id');
+    final newText = formatter.format(value);
+    
+    return newValue.copyWith(
+      text: newText,
+      selection: TextSelection.collapsed(offset: newText.length),
     );
   }
 }

@@ -44,5 +44,18 @@ class WebNotificationHelper implements NotificationHelper {
   }
 
   @override
+  Future<void> scheduleDailyNotification({
+    required int id,
+    required String title,
+    required String body,
+    required int hour,
+    required int minute,
+    required String soundName,
+  }) async {}
+
+  @override
+  Future<void> cancel(int id) async {}
+
+  @override
   Future<void> cancelAllNotifications() async {}
 }

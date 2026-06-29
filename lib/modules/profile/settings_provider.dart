@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uas_projekk/core/notifications/prayer_notification_service.dart';
+import 'package:uas_projekk/core/notifications/notification_helper.dart';
 
 class SettingsProvider extends ChangeNotifier {
   bool _isDarkMode = false;
@@ -9,6 +10,8 @@ class SettingsProvider extends ChangeNotifier {
   bool _isAdhanNotifEnabled = true;
   bool _isDzikirNotifEnabled = true;
   String _selectedAdhanSoundId = 'makkah';
+  String _dzikirTime = "08:00";
+  String _selectedDzikirSoundId = "dzikir_pagi";
   
   String _userName = "M.rusdi";
   String _profilePicUrl = "https://i.pravatar.cc/150?u=pilarislam";
@@ -33,6 +36,8 @@ class SettingsProvider extends ChangeNotifier {
   bool get isAdhanNotifEnabled => _isAdhanNotifEnabled;
   bool get isDzikirNotifEnabled => _isDzikirNotifEnabled;
   String get selectedAdhanSoundId => _selectedAdhanSoundId;
+  String get dzikirTime => _dzikirTime;
+  String get selectedDzikirSoundId => _selectedDzikirSoundId;
   String get userName => _userName;
   String get profilePicUrl => _profilePicUrl;
   
@@ -54,6 +59,12 @@ class SettingsProvider extends ChangeNotifier {
     _isAdhanNotifEnabled = prefs.getBool('isAdhanNotifEnabled') ?? true;
     _isDzikirNotifEnabled = prefs.getBool('isDzikirNotifEnabled') ?? true;
     _selectedAdhanSoundId = prefs.getString('selectedAdhanSoundId') ?? 'makkah';
+    _dzikirTime = prefs.getString('dzikirTime') ?? '08:00';
+    _selectedDzikirSoundId = prefs.getString('selectedDzikirSoundId') ?? 'dzikir_pagi';
+    
+    // Refresh background alarm scheduling on initialization
+    rescheduleDzikirNotification();
+    
     _userName = prefs.getString('userName') ?? "M.rusdi";
     _profilePicUrl = prefs.getString('profilePicUrl') ?? "https://i.pravatar.cc/150?u=pilarislam";
     _totalDoaRead = prefs.getInt('totalDoaRead') ?? 1240;
@@ -75,6 +86,8 @@ class SettingsProvider extends ChangeNotifier {
     await prefs.setBool('isAdhanNotifEnabled', _isAdhanNotifEnabled);
     await prefs.setBool('isDzikirNotifEnabled', _isDzikirNotifEnabled);
     await prefs.setString('selectedAdhanSoundId', _selectedAdhanSoundId);
+    await prefs.setString('dzikirTime', _dzikirTime);
+    await prefs.setString('selectedDzikirSoundId', _selectedDzikirSoundId);
     await prefs.setString('userName', _userName);
     await prefs.setString('profilePicUrl', _profilePicUrl);
     await prefs.setInt('totalDoaRead', _totalDoaRead);
@@ -116,6 +129,51 @@ class SettingsProvider extends ChangeNotifier {
     _isDzikirNotifEnabled = value;
     _saveToPrefs();
     notifyListeners();
+    rescheduleDzikirNotification();
+  }
+
+  void setDzikirTime(String time) {
+    _dzikirTime = time;
+    _saveToPrefs();
+    notifyListeners();
+    rescheduleDzikirNotification();
+  }
+
+  void setSelectedDzikirSoundId(String id) {
+    _selectedDzikirSoundId = id;
+    _saveToPrefs();
+    notifyListeners();
+    rescheduleDzikirNotification();
+  }
+
+  Future<void> rescheduleDzikirNotification() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isEnabled = prefs.getBool('isDzikirNotifEnabled') ?? true;
+    final timeStr = prefs.getString('dzikirTime') ?? '08:00';
+    final soundId = prefs.getString('selectedDzikirSoundId') ?? 'dzikir_pagi';
+
+    final notificationHelper = NotificationHelper();
+    await notificationHelper.cancel(99); // Cancel old schedule
+
+    if (!isEnabled) return;
+
+    try {
+      final parts = timeStr.split(':');
+      final hour = int.parse(parts[0]);
+      final minute = int.parse(parts[1]);
+
+      await notificationHelper.scheduleDailyNotification(
+        id: 99,
+        title: 'Waktunya Dzikir',
+        body: 'Mari luangkan waktu sejenak untuk mengingat Allah dengan berdzikir.',
+        hour: hour,
+        minute: minute,
+        soundName: soundId,
+      );
+      print('Dzikir daily reminder rescheduled at $timeStr with sound $soundId');
+    } catch (e) {
+      print('Error rescheduling dzikir notification: $e');
+    }
   }
 
   void setSelectedAdhanSoundId(String id) {

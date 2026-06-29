@@ -13,5 +13,14 @@ abstract class NotificationHelper {
     required String body,
     required DateTime scheduledTime,
   });
+  Future<void> scheduleDailyNotification({
+    required int id,
+    required String title,
+    required String body,
+    required int hour,
+    required int minute,
+    required String soundName,
+  });
+  Future<void> cancel(int id);
   Future<void> cancelAllNotifications();
 }

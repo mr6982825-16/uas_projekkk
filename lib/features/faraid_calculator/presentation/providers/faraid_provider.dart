@@ -15,6 +15,9 @@ class FaraidProvider extends ChangeNotifier {
 
   // -- Asset Management --
   void addAsset(AssetModel asset) {
+    if (asset.name == "Pelunasan Utang Aktif" || asset.name == "Penambahan Piutang Aktif") {
+      _assets.removeWhere((item) => item.name == asset.name);
+    }
     _assets.add(asset);
     notifyListeners();
   }

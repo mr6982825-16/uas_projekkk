@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:uas_projekk/core/theme.dart';
 import 'package:uas_projekk/modules/quran/quran_screen.dart';
 import 'package:uas_projekk/modules/hadith/hadith_list_screen.dart';
 import 'package:uas_projekk/modules/dzikir/dzikir_pagi_petang_screen.dart';
@@ -259,7 +258,7 @@ class FeaturesDashboardScreen extends StatelessWidget {
         crossAxisCount: 2,
         mainAxisSpacing: 15,
         crossAxisSpacing: 15,
-        childAspectRatio: 1.3,
+        childAspectRatio: 1.2,
         children: [
           _buildFeatureCard(Icons.menu_book_outlined, "Al-Quran", "The Noble Revelation", theme, settings, () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const QuranScreen()));
@@ -328,6 +327,8 @@ class FeaturesDashboardScreen extends StatelessWidget {
             Text(
               subtitle,
               style: GoogleFonts.inter(fontSize: 10, color: Colors.grey),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

@@ -10,6 +10,7 @@ import 'package:uas_projekk/modules/profile/about_screen.dart';
 import 'package:uas_projekk/modules/profile/feedback_screen.dart';
 import 'package:uas_projekk/modules/dzikir/doa_harian_screen.dart';
 import 'package:uas_projekk/modules/profile/adhan_sound_selector.dart';
+import 'package:uas_projekk/modules/profile/dzikir_sound_selector.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -424,6 +425,22 @@ class ProfileScreen extends StatelessWidget {
             onTap: () => _showAdhanSoundSelector(context),
           ),
         _buildSwitchTile(Icons.alarm, "Pengingat Dzikir", settings.isDzikirNotifEnabled, (val) => settings.toggleDzikirNotif(val), theme),
+        if (settings.isDzikirNotifEnabled) ...[
+          _buildSettingsTile(
+            Icons.access_time_outlined,
+            "Waktu Pengingat Dzikir",
+            theme,
+            subtitle: settings.dzikirTime,
+            onTap: () => _selectDzikirTime(context, settings),
+          ),
+          _buildSettingsTile(
+            Icons.music_note_outlined,
+            "Suara Pengingat Dzikir",
+            theme,
+            subtitle: _getDzikirSoundName(settings.selectedDzikirSoundId),
+            onTap: () => _showDzikirSoundSelector(context),
+          ),
+        ],
       ],
     );
   }
@@ -568,5 +585,54 @@ class ProfileScreen extends StatelessWidget {
       backgroundColor: Colors.transparent,
       builder: (context) => const AdhanSoundSelectorSheet(),
     );
+  }
+
+  String _getDzikirSoundName(String soundId) {
+    switch (soundId) {
+      case 'dzikir_pagi':
+        return 'Dzikir Pagi (Lengkap)';
+      case 'dzikir_petang':
+        return 'Dzikir Petang (Lengkap)';
+      default:
+        return 'Dzikir Pagi (Lengkap)';
+    }
+  }
+
+  void _showDzikirSoundSelector(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const DzikirSoundSelectorSheet(),
+    );
+  }
+
+  Future<void> _selectDzikirTime(BuildContext context, SettingsProvider settings) async {
+    final parts = settings.dzikirTime.split(':');
+    final initialHour = int.parse(parts[0]);
+    final initialMinute = int.parse(parts[1]);
+
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: initialHour, minute: initialMinute),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF0F4D3A),
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      final hourStr = picked.hour.toString().padLeft(2, '0');
+      final minuteStr = picked.minute.toString().padLeft(2, '0');
+      settings.setDzikirTime('$hourStr:$minuteStr');
+    }
   }
 }

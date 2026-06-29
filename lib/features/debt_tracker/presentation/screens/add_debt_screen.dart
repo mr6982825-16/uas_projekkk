@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme.dart';
@@ -165,6 +166,7 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
               TextFormField(
                 controller: _amountController,
                 keyboardType: TextInputType.number,
+                inputFormatters: [IndonesianThousandsFormatter()],
                 decoration: InputDecoration(
                   hintText: "0",
                   filled: true,
@@ -226,6 +228,30 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class IndonesianThousandsFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    if (newValue.text.isEmpty) {
+      return newValue;
+    }
+    
+    // Remove all non-digits
+    String clean = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (clean.isEmpty) {
+      return newValue.copyWith(text: '', selection: const TextSelection.collapsed(offset: 0));
+    }
+    
+    final value = int.parse(clean);
+    final formatter = NumberFormat.decimalPattern('id');
+    final newText = formatter.format(value);
+    
+    return newValue.copyWith(
+      text: newText,
+      selection: TextSelection.collapsed(offset: newText.length),
     );
   }
 }

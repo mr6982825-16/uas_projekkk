@@ -188,14 +188,16 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
             style: GoogleFonts.inter(fontSize: 16, color: Colors.white70),
           ),
           const Divider(color: Colors.white30, height: 40),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 15,
+            runSpacing: 10,
             children: [
               Text(
                 "${widget.surah.revelationType.toUpperCase()} • ${widget.surah.numberOfAyahs} AYAT",
                 style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
               ),
-              const SizedBox(width: 15),
               GestureDetector(
                 onTap: _startFullSurah,
                 child: Container(
@@ -205,6 +207,7 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(_isAutoPlay ? Icons.stop : Icons.play_circle_fill, color: Colors.white, size: 18),
                       const SizedBox(width: 5),

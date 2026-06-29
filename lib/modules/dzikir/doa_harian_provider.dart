@@ -10,7 +10,8 @@ class DoaHarianProvider extends ChangeNotifier {
   bool _isLoading = false;
   String _error = '';
 
-  List<DoaHarian> get allDoa => _filteredDoa.isEmpty && _allDoa.isNotEmpty ? _allDoa : _filteredDoa;
+  List<DoaHarian> get allDoa =>
+      _filteredDoa.isEmpty && _allDoa.isNotEmpty ? _allDoa : _filteredDoa;
   bool get isLoading => _isLoading;
   String get error => _error;
 
@@ -21,7 +22,7 @@ class DoaHarianProvider extends ChangeNotifier {
 
     try {
       final response = await _dio.get('https://api.myquran.com/v2/doa/semua');
-      
+
       if (response.statusCode == 200) {
         final data = response.data['data'] as List;
         _allDoa = data.map((json) => DoaHarian.fromJson(json)).toList();
