@@ -191,6 +191,20 @@ class _DebtDashboardScreenState extends State<DebtDashboardScreen> {
       iconColor = Colors.grey;
     }
 
+    final today = DateTime.now();
+    final todayDate = DateTime(today.year, today.month, today.day);
+    final dueDateOnly = debt.dueDate != null 
+        ? DateTime(debt.dueDate!.year, debt.dueDate!.month, debt.dueDate!.day)
+        : null;
+    
+    final isOverdue = !isPast && !debt.isPaid && 
+        dueDateOnly != null && 
+        dueDateOnly.isBefore(todayDate);
+        
+    final isDueToday = !isPast && !debt.isPaid && 
+        dueDateOnly != null && 
+        dueDateOnly.isAtSameMomentAs(todayDate);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(15),
@@ -234,6 +248,79 @@ class _DebtDashboardScreenState extends State<DebtDashboardScreen> {
                   debt.isDebt ? "Saya berutang" : "Dia berutang",
                   style: GoogleFonts.inter(fontSize: 12, color: Colors.grey),
                 ),
+                if (debt.dueDate != null) ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_month, 
+                        size: 13, 
+                        color: isPast 
+                            ? Colors.grey 
+                            : (isOverdue 
+                                ? (settings.isDarkMode ? Colors.red[300] : Colors.red[700])
+                                : (isDueToday ? (settings.isDarkMode ? Colors.orange[300] : Colors.orange[800]) : Colors.grey[600])),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        "Tempo: ${DateFormat('dd MMM yyyy', 'id_ID').format(debt.dueDate!)}",
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: (isOverdue || isDueToday) ? FontWeight.w600 : FontWeight.normal,
+                          color: isPast 
+                              ? Colors.grey 
+                              : (isOverdue 
+                                  ? (settings.isDarkMode ? Colors.red[300] : Colors.red[700])
+                                  : (isDueToday ? (settings.isDarkMode ? Colors.orange[300] : Colors.orange[800]) : Colors.grey[600])),
+                        ),
+                      ),
+                      if (isOverdue) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: settings.isDarkMode ? Colors.red[900]!.withOpacity(0.3) : Colors.red[50],
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: settings.isDarkMode ? Colors.red[800]!.withOpacity(0.5) : Colors.red[200]!, 
+                              width: 0.5,
+                            ),
+                          ),
+                          child: Text(
+                            "Lewat Tempo",
+                            style: GoogleFonts.inter(
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                              color: settings.isDarkMode ? Colors.red[200] : Colors.red[800],
+                            ),
+                          ),
+                        ),
+                      ],
+                      if (isDueToday) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: settings.isDarkMode ? Colors.orange[900]!.withOpacity(0.3) : Colors.orange[50],
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: settings.isDarkMode ? Colors.orange[800]!.withOpacity(0.5) : Colors.orange[200]!, 
+                              width: 0.5,
+                            ),
+                          ),
+                          child: Text(
+                            "Hari Ini",
+                            style: GoogleFonts.inter(
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                              color: settings.isDarkMode ? Colors.orange[200] : Colors.orange[900],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
               ],
             ),
           ),

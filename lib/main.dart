@@ -14,10 +14,12 @@ import 'package:uas_projekk/modules/dzikir/dzikir_provider.dart';
 import 'package:uas_projekk/features/pilar_islam/logic/pilar_islam_provider.dart';
 import 'package:uas_projekk/features/debt_tracker/presentation/providers/debt_provider.dart';
 import 'package:uas_projekk/features/faraid_calculator/presentation/providers/faraid_provider.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:uas_projekk/core/notifications/prayer_notification_service.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('id_ID', null);
   runApp(const InitialApp());
 }
 

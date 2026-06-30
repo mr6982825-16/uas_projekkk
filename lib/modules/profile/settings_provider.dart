@@ -13,7 +13,7 @@ class SettingsProvider extends ChangeNotifier {
   String _dzikirTime = "08:00";
   String _selectedDzikirSoundId = "dzikir_pagi";
   
-  String _userName = "M.rusdi";
+  String _userName = "name";
   String _profilePicUrl = "https://i.pravatar.cc/150?u=pilarislam";
 
   // Stats
@@ -65,7 +65,7 @@ class SettingsProvider extends ChangeNotifier {
     // Refresh background alarm scheduling on initialization
     rescheduleDzikirNotification();
     
-    _userName = prefs.getString('userName') ?? "M.rusdi";
+    _userName = prefs.getString('userName') ?? "name";
     _profilePicUrl = prefs.getString('profilePicUrl') ?? "https://i.pravatar.cc/150?u=pilarislam";
     _totalDoaRead = prefs.getInt('totalDoaRead') ?? 1240;
     _userPoints = prefs.getInt('userPoints') ?? 850;

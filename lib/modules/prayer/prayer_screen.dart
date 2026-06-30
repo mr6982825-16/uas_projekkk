@@ -329,6 +329,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
             _buildPrayerTile('Ashar', times.asr),
             _buildPrayerTile('Maghrib', times.maghrib),
             _buildPrayerTile('Isya', times.isha),
+            const SizedBox(height: 100),
           ],
         );
       },
@@ -629,6 +630,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                   ),
                 ),
               ),
+              const SizedBox(height: 100),
             ],
           ),
         ),

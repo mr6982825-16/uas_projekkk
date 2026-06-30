@@ -53,8 +53,8 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             _buildContactCard(
               Icons.chat_outlined,
               "WhatsApp",
-              "+62 812 3456 7890",
-              () => _launchUrl("https://wa.me/6281234567890"),
+              "+62 896 0422 7985",
+              () => _launchUrl("https://wa.me/6289604227985"),
             ),
             const SizedBox(height: 40),
             Text(
