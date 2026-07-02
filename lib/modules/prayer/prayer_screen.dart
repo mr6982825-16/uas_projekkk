@@ -131,7 +131,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
       _smoothDirection = _smoothDirection + 0.15 * (_continuousDirection - _smoothDirection);
     }
 
-    final absoluteQiblah = (data.qiblah + data.direction) % 360;
+    final absoluteQiblah = (data.direction - data.qiblah) % 360;
 
     setState(() {
       _currentDirection = _smoothDirection;
@@ -302,11 +302,15 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Lokasi aktif',
+                    provider.address.contains('(Terakhir Login)')
+                        ? 'Lokasi Terakhir Login (GPS Tidak Aktif)'
+                        : 'Lokasi aktif',
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
-                      color: const Color(0xFF0F4D3A),
+                      color: provider.address.contains('(Terakhir Login)')
+                          ? const Color(0xFFD4AF37)
+                          : const Color(0xFF0F4D3A),
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -737,10 +741,10 @@ class KiblatCompassPainter extends CustomPainter {
     );
 
     final textDirections = {
-      'N': 0.0,
-      'E': 90.0,
+      'U': 0.0,
+      'T': 90.0,
       'S': 180.0,
-      'W': 270.0,
+      'B': 270.0,
     };
 
     final textDist = tickInnerLong - 16;

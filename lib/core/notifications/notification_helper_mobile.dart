@@ -107,6 +107,7 @@ class MobileNotificationHelper implements NotificationHelper {
       priority: Priority.high,
       playSound: true,
       sound: RawResourceAndroidNotificationSound(soundFileName),
+      audioAttributesUsage: AudioAttributesUsage.alarm,
     );
 
     final NotificationDetails platformDetails = NotificationDetails(
@@ -167,6 +168,7 @@ class MobileNotificationHelper implements NotificationHelper {
       priority: Priority.high,
       playSound: true,
       sound: RawResourceAndroidNotificationSound(soundName),
+      audioAttributesUsage: AudioAttributesUsage.alarm,
     );
 
     final NotificationDetails platformDetails = NotificationDetails(

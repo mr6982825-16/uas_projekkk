@@ -219,63 +219,72 @@ class _DebtDashboardScreenState extends State<DebtDashboardScreen> {
           )
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: isPast ? Colors.grey.withOpacity(0.1) : iconColor.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(iconData, color: iconColor, size: 24),
-          ),
-          const SizedBox(width: 15),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  debt.name,
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.bold, 
-                    fontSize: 15, 
-                    color: isPast ? Colors.grey : theme.colorScheme.onSurface,
-                    decoration: isPast ? TextDecoration.lineThrough : null,
-                  ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isPast ? Colors.grey.withOpacity(0.1) : iconColor.withOpacity(0.1),
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  debt.isDebt ? "Saya berutang" : "Dia berutang",
-                  style: GoogleFonts.inter(fontSize: 12, color: Colors.grey),
-                ),
-                if (debt.dueDate != null) ...[
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.calendar_month, 
-                        size: 13, 
-                        color: isPast 
-                            ? Colors.grey 
-                            : (isOverdue 
-                                ? (settings.isDarkMode ? Colors.red[300] : Colors.red[700])
-                                : (isDueToday ? (settings.isDarkMode ? Colors.orange[300] : Colors.orange[800]) : Colors.grey[600])),
+                child: Icon(iconData, color: iconColor, size: 24),
+              ),
+              const SizedBox(width: 15),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      debt.name,
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.bold, 
+                        fontSize: 15, 
+                        color: isPast ? Colors.grey : theme.colorScheme.onSurface,
+                        decoration: isPast ? TextDecoration.lineThrough : null,
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        "Tempo: ${DateFormat('dd MMM yyyy', 'id_ID').format(debt.dueDate!)}",
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          fontWeight: (isOverdue || isDueToday) ? FontWeight.w600 : FontWeight.normal,
-                          color: isPast 
-                              ? Colors.grey 
-                              : (isOverdue 
-                                  ? (settings.isDarkMode ? Colors.red[300] : Colors.red[700])
-                                  : (isDueToday ? (settings.isDarkMode ? Colors.orange[300] : Colors.orange[800]) : Colors.grey[600])),
-                        ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      debt.isDebt ? "Saya berutang" : "Dia berutang",
+                      style: GoogleFonts.inter(fontSize: 12, color: Colors.grey),
+                    ),
+                    if (debt.dueDate != null) ...[
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_month, 
+                            size: 13, 
+                            color: isPast 
+                                ? Colors.grey 
+                                : (isOverdue 
+                                    ? (settings.isDarkMode ? Colors.red[300] : Colors.red[700])
+                                    : (isDueToday ? (settings.isDarkMode ? Colors.orange[300] : Colors.orange[800]) : Colors.grey[600])),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              "Tempo: ${DateFormat('dd MMM yyyy', 'id_ID').format(debt.dueDate!)}",
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                fontWeight: (isOverdue || isDueToday) ? FontWeight.w600 : FontWeight.normal,
+                                color: isPast 
+                                    ? Colors.grey 
+                                    : (isOverdue 
+                                        ? (settings.isDarkMode ? Colors.red[300] : Colors.red[700])
+                                        : (isDueToday ? (settings.isDarkMode ? Colors.orange[300] : Colors.orange[800]) : Colors.grey[600])),
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                       if (isOverdue) ...[
-                        const SizedBox(width: 6),
+                        const SizedBox(height: 4),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
@@ -297,7 +306,7 @@ class _DebtDashboardScreenState extends State<DebtDashboardScreen> {
                         ),
                       ],
                       if (isDueToday) ...[
-                        const SizedBox(width: 6),
+                        const SizedBox(height: 4),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
@@ -319,14 +328,10 @@ class _DebtDashboardScreenState extends State<DebtDashboardScreen> {
                         ),
                       ],
                     ],
-                  ),
-                ],
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
               Text(
                 _currencyFormat.format(debt.amount),
                 style: GoogleFonts.inter(
@@ -335,73 +340,73 @@ class _DebtDashboardScreenState extends State<DebtDashboardScreen> {
                   color: isPast ? Colors.grey : (debt.isDebt ? Colors.red[700] : Colors.green[700]),
                 ),
               ),
-              const SizedBox(height: 5),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  InkWell(
-                    onTap: () => provider.togglePaidStatus(debt),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: isPast ? Colors.grey.withOpacity(0.2) : theme.primaryColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        isPast ? "Batalkan" : "Tandai Lunas",
-                        style: GoogleFonts.inter(
-                          fontSize: 10, 
-                          fontWeight: FontWeight.bold,
-                          color: isPast ? Colors.grey[700] : theme.primaryColor,
-                        ),
-                      ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              InkWell(
+                onTap: () => provider.togglePaidStatus(debt),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isPast ? Colors.grey.withOpacity(0.2) : theme.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    isPast ? "Batalkan" : "Tandai Lunas",
+                    style: GoogleFonts.inter(
+                      fontSize: 10, 
+                      fontWeight: FontWeight.bold,
+                      color: isPast ? Colors.grey[700] : theme.primaryColor,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  GestureDetector(
-                    onTap: () {
-                      showDialog(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                          title: Text(
-                            "Hapus Catatan",
-                            style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
-                          ),
-                          content: Text(
-                            "Apakah Anda yakin ingin menghapus catatan '${debt.name}' ini?",
-                            style: GoogleFonts.inter(color: theme.colorScheme.onSurface.withOpacity(0.8)),
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              child: Text("Batal", style: GoogleFonts.inter(color: Colors.grey)),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                provider.deleteDebt(debt);
-                                Navigator.pop(ctx);
-                              },
-                              child: Text("Hapus", style: GoogleFonts.inter(color: Colors.redAccent, fontWeight: FontWeight.bold)),
-                            ),
-                          ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      title: Text(
+                        "Hapus Catatan",
+                        style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
+                      ),
+                      content: Text(
+                        "Apakah Anda yakin ingin menghapus catatan '${debt.name}' ini?",
+                        style: GoogleFonts.inter(color: theme.colorScheme.onSurface.withOpacity(0.8)),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: Text("Batal", style: GoogleFonts.inter(color: Colors.grey)),
                         ),
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.delete_outline,
-                        size: 14,
-                        color: Colors.red,
-                      ),
+                        TextButton(
+                          onPressed: () {
+                            provider.deleteDebt(debt);
+                            Navigator.pop(ctx);
+                          },
+                          child: Text("Hapus", style: GoogleFonts.inter(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                        ),
+                      ],
                     ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                ],
+                  child: const Icon(
+                    Icons.delete_outline,
+                    size: 14,
+                    color: Colors.red,
+                  ),
+                ),
               ),
             ],
           ),

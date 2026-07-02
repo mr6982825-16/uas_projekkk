@@ -76,6 +76,27 @@ class _AdhanSoundSelectorSheetState extends State<AdhanSoundSelectorSheet> {
     super.initState();
     _audioPlayer = AudioPlayer();
     
+    try {
+      _audioPlayer.setAudioContext(
+        const AudioContext(
+          android: AudioContextAndroid(
+            stayAwake: true,
+            contentType: AndroidContentType.music,
+            usageType: AndroidUsageType.alarm,
+            audioFocus: AndroidAudioFocus.gainTransientMayDuck,
+          ),
+          iOS: AudioContextIOS(
+            category: AVAudioSessionCategory.playback,
+            options: [
+              AVAudioSessionOptions.mixWithOthers,
+            ],
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Failed to set AudioContext on preview player: $e');
+    }
+    
     // Listen to player state changes
     _audioPlayer.onPlayerStateChanged.listen((state) {
       if (state == PlayerState.playing) {

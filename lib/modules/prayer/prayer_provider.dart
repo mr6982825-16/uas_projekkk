@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uas_projekk/core/notifications/prayer_notification_service.dart';
 
 class PrayerTimes {
@@ -49,6 +50,10 @@ class PrayerProvider extends ChangeNotifier {
   String _province = '';
   String _country = '';
 
+  PrayerProvider() {
+    _loadSavedData();
+  }
+
   PrayerTimes? get prayerTimes => _prayerTimes;
   String get address => _address;
   bool get isLoading => _isLoading;
@@ -59,6 +64,58 @@ class PrayerProvider extends ChangeNotifier {
   String get province => _province;
   String get country => _country;
   bool get hasLocation => _currentPosition != null;
+
+  Future<void> _loadSavedData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final fajr = prefs.getString('cached_fajr');
+      final dhuhr = prefs.getString('cached_dhuhr');
+      final asr = prefs.getString('cached_asr');
+      final maghrib = prefs.getString('cached_maghrib');
+      final isha = prefs.getString('cached_isha');
+      final date = prefs.getString('cached_date');
+
+      if (fajr != null && dhuhr != null && asr != null && maghrib != null && isha != null && date != null) {
+        _prayerTimes = PrayerTimes(
+          fajr: fajr,
+          dhuhr: dhuhr,
+          asr: asr,
+          maghrib: maghrib,
+          isha: isha,
+          date: date,
+        );
+        _address = prefs.getString('cached_address') ?? 'Lokasi Terakhir Login';
+        _city = prefs.getString('cached_city') ?? '';
+        _province = prefs.getString('cached_province') ?? '';
+        _country = prefs.getString('cached_country') ?? '';
+        final lat = prefs.getDouble('cached_latitude');
+        final lon = prefs.getDouble('cached_longitude');
+        if (lat != null && lon != null) {
+          _currentPosition = Position(
+            latitude: lat,
+            longitude: lon,
+            timestamp: DateTime.now(),
+            accuracy: 0.0,
+            altitude: 0.0,
+            heading: 0.0,
+            speed: 0.0,
+            speedAccuracy: 0.0,
+            altitudeAccuracy: 0.0,
+            headingAccuracy: 0.0,
+          );
+          _qiblaBearing = calculateQiblaBearing(lat, lon);
+        }
+        notifyListeners();
+
+        // Jadwalkan notifikasi latar belakang dan timer di latar depan
+        final notifService = PrayerNotificationService();
+        notifService.scheduleBackgroundNotifications(_prayerTimes!);
+        notifService.startTimer(this);
+      }
+    } catch (e) {
+      debugPrint('Error loading cached prayer times: $e');
+    }
+  }
 
   Future<void> fetchPrayerTimes() async {
     _isLoading = true;
@@ -85,7 +142,22 @@ class PrayerProvider extends ChangeNotifier {
       if (response.statusCode == 200) {
         _prayerTimes = PrayerTimes.fromJson(response.data['data']);
         _address = 'Lokasi Anda (GPS Aktif)';
-        
+
+        // Simpan ke SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('cached_fajr', _prayerTimes!.fajr);
+        await prefs.setString('cached_dhuhr', _prayerTimes!.dhuhr);
+        await prefs.setString('cached_asr', _prayerTimes!.asr);
+        await prefs.setString('cached_maghrib', _prayerTimes!.maghrib);
+        await prefs.setString('cached_isha', _prayerTimes!.isha);
+        await prefs.setString('cached_date', _prayerTimes!.date);
+        await prefs.setString('cached_address', _address);
+        await prefs.setString('cached_city', _city);
+        await prefs.setString('cached_province', _province);
+        await prefs.setString('cached_country', _country);
+        await prefs.setDouble('cached_latitude', position.latitude);
+        await prefs.setDouble('cached_longitude', position.longitude);
+
         // Schedule background notifications and start foreground timer
         final notifService = PrayerNotificationService();
         notifService.scheduleBackgroundNotifications(_prayerTimes!);
@@ -94,8 +166,51 @@ class PrayerProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error fetching prayer times: $e');
       _locationMessage = e.toString();
-      _address = 'Gagal mengambil lokasi';
-      _prayerTimes = null;
+
+      // Fallback ke cache jika tersedia
+      final prefs = await SharedPreferences.getInstance();
+      final fajr = prefs.getString('cached_fajr');
+      if (fajr != null) {
+        _prayerTimes = PrayerTimes(
+          fajr: fajr,
+          dhuhr: prefs.getString('cached_dhuhr') ?? '',
+          asr: prefs.getString('cached_asr') ?? '',
+          maghrib: prefs.getString('cached_maghrib') ?? '',
+          isha: prefs.getString('cached_isha') ?? '',
+          date: prefs.getString('cached_date') ?? '',
+        );
+        _address = prefs.getString('cached_address') ?? 'Lokasi Terakhir Login';
+        if (!_address.contains('(Terakhir Login)')) {
+          _address = '$_address (Terakhir Login)';
+        }
+        _city = prefs.getString('cached_city') ?? '';
+        _province = prefs.getString('cached_province') ?? '';
+        _country = prefs.getString('cached_country') ?? '';
+        final lat = prefs.getDouble('cached_latitude');
+        final lon = prefs.getDouble('cached_longitude');
+        if (lat != null && lon != null) {
+          _currentPosition = Position(
+            latitude: lat,
+            longitude: lon,
+            timestamp: DateTime.now(),
+            accuracy: 0.0,
+            altitude: 0.0,
+            heading: 0.0,
+            speed: 0.0,
+            speedAccuracy: 0.0,
+            altitudeAccuracy: 0.0,
+            headingAccuracy: 0.0,
+          );
+          _qiblaBearing = calculateQiblaBearing(lat, lon);
+        }
+
+        final notifService = PrayerNotificationService();
+        notifService.scheduleBackgroundNotifications(_prayerTimes!);
+        notifService.startTimer(this);
+      } else {
+        _address = 'Gagal mengambil lokasi';
+        _prayerTimes = null;
+      }
     } finally {
       _isLoading = false;
       notifyListeners();

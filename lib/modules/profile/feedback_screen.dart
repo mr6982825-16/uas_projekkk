@@ -46,8 +46,8 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             _buildContactCard(
               Icons.email_outlined,
               "Email Dukungan",
-              "support@pilarislam.id",
-              () => _launchUrl("mailto:support@pilarislam.id"),
+              "pilarislam536@gmail.com",
+              () => _launchUrl("mailto:pilarislam536@gmail.com"),
             ),
             const SizedBox(height: 15),
             _buildContactCard(

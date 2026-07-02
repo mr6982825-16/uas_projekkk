@@ -35,6 +35,27 @@ class PrayerNotificationService extends ChangeNotifier {
   Future<void> init() async {
     await _notificationHelper.init();
     
+    try {
+      await _audioPlayer.setAudioContext(
+        const AudioContext(
+          android: AudioContextAndroid(
+            stayAwake: true,
+            contentType: AndroidContentType.music,
+            usageType: AndroidUsageType.alarm,
+            audioFocus: AndroidAudioFocus.gainTransientMayDuck,
+          ),
+          iOS: AudioContextIOS(
+            category: AVAudioSessionCategory.playback,
+            options: [
+              AVAudioSessionOptions.mixWithOthers,
+            ],
+          ),
+        ),
+      );
+    } catch (e) {
+      print('Failed to set AudioContext: $e');
+    }
+    
     _audioPlayer.onPlayerStateChanged.listen((state) {
       if (state == PlayerState.completed || state == PlayerState.stopped) {
         _isPlayingAdhan = false;
