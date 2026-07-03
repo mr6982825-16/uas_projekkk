@@ -28,37 +28,37 @@ class AdhanSoundSelectorSheet extends StatefulWidget {
       id: 'makkah',
       name: 'Adzan Makkah (Populer)',
       muadhin: 'Masjidil Haram (Syaikh Ali Mulla)',
-      url: 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan.mp3',
+      url: 'https://praytimes.org/audio/sunni/Adhan-Makkah.mp3',
     ),
     AdhanSound(
       id: 'madinah',
       name: 'Adzan Madinah (Syahdu)',
       muadhin: 'Masjid Nabawi (Syaikh Abdul Majid)',
-      url: 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan_fajr.mp3',
+      url: 'https://praytimes.org/audio/sunni/Adhan-Madinah.mp3',
     ),
     AdhanSound(
       id: 'alaqsa',
       name: 'Adzan Al-Aqsa',
       muadhin: 'Masjid Al-Aqsa (Yerusalem)',
-      url: 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan.mp3',
+      url: 'https://praytimes.org/audio/sunni/Adhan-Alaqsa.mp3',
     ),
     AdhanSound(
       id: 'egypt',
       name: 'Adzan Mesir (Melodi Indah)',
       muadhin: 'Syaikh Abdul Basit Abdus Samad',
-      url: 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan.mp3',
+      url: 'https://praytimes.org/audio/sunni/Adhan-Egypt.mp3',
     ),
     AdhanSound(
       id: 'turkey',
       name: 'Adzan Turki',
       muadhin: 'Gaya Klasik Kekaisaran Turki Usmani',
-      url: 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan.mp3',
+      url: 'https://praytimes.org/audio/sunni/Sharif-Doman.mp3',
     ),
     AdhanSound(
       id: 'yusuf_islam',
       name: 'Adzan Yusuf Islam',
       muadhin: 'Yusuf Islam (Cat Stevens)',
-      url: 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan_fajr.mp3',
+      url: 'https://praytimes.org/audio/sunni/Yusuf-Islam.mp3',
     ),
   ];
 
@@ -143,9 +143,7 @@ class _AdhanSoundSelectorSheetState extends State<AdhanSoundSelectorSheet> {
         final playUrl = kIsWeb ? 'https://corsproxy.io/?${sound.url}' : sound.url;
 
         // Local asset path mapping
-        final String localPath = sound.id == 'madinah' || sound.id == 'yusuf_islam'
-            ? 'audio/azan2.mp3'
-            : 'audio/azan1.mp3';
+        final String localPath = 'audio/azan_${sound.id}.mp3';
 
         bool localExists = false;
         try {
@@ -347,6 +345,25 @@ class _AdhanSoundSelectorSheetState extends State<AdhanSoundSelectorSheet> {
                 ),
               ),
               const SizedBox(height: 10),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline, size: 16, color: Colors.grey),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "Catatan: Adzan Subuh akan secara otomatis melantunkan bacaan 'Assalatu khairum minan naum' (Adzan 2).",
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          color: Colors.grey[600],
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(

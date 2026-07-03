@@ -24,12 +24,12 @@ class PrayerNotificationService extends ChangeNotifier {
   String get playingPrayerName => _playingPrayerName;
 
   static const Map<String, String> adhanSounds = {
-    'makkah': 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan.mp3',
-    'madinah': 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan_fajr.mp3',
-    'alaqsa': 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan.mp3',
-    'egypt': 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan.mp3',
-    'turkey': 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan.mp3',
-    'yusuf_islam': 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan_fajr.mp3',
+    'makkah': 'https://praytimes.org/audio/sunni/Adhan-Makkah.mp3',
+    'madinah': 'https://praytimes.org/audio/sunni/Adhan-Madinah.mp3',
+    'alaqsa': 'https://praytimes.org/audio/sunni/Adhan-Alaqsa.mp3',
+    'egypt': 'https://praytimes.org/audio/sunni/Adhan-Egypt.mp3',
+    'turkey': 'https://praytimes.org/audio/sunni/Sharif-Doman.mp3',
+    'yusuf_islam': 'https://praytimes.org/audio/sunni/Yusuf-Islam.mp3',
   };
 
   Future<void> init() async {
@@ -85,13 +85,14 @@ class PrayerNotificationService extends ChangeNotifier {
 
       if (!isEnabled) return;
 
-      final rawUrl = adhanSounds[soundId] ?? adhanSounds['makkah']!;
+      final isSubuh = prayerName.toLowerCase() == 'subuh';
+      final rawUrl = isSubuh
+          ? 'https://raw.githubusercontent.com/AalianKhan/adhans/master/adhan_fajr.mp3'
+          : (adhanSounds[soundId] ?? adhanSounds['makkah']!);
       final playUrl = kIsWeb ? 'https://corsproxy.io/?$rawUrl' : rawUrl;
 
       // Local asset mapping fallback
-      final String localPath = soundId == 'madinah' || soundId == 'yusuf_islam'
-          ? 'audio/azan2.mp3'
-          : 'audio/azan1.mp3';
+      final String localPath = isSubuh ? 'audio/azan2.mp3' : 'audio/azan_$soundId.mp3';
 
       await _audioPlayer.stop();
       _isPlayingAdhan = true;

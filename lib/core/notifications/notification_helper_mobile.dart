@@ -94,10 +94,9 @@ class MobileNotificationHelper implements NotificationHelper {
     final prefs = await SharedPreferences.getInstance();
     final soundId = prefs.getString('selectedAdhanSoundId') ?? 'makkah';
     
-    // Select raw audio resource based on settings (azan1 or azan2)
-    final String soundFileName = soundId == 'madinah' || soundId == 'yusuf_islam' 
-        ? 'azan2' 
-        : 'azan1';
+    final bool isSubuh = id == 1 || title.toLowerCase().contains('subuh');
+    // Select raw audio resource based on settings and prayer time
+    final String soundFileName = isSubuh ? 'azan2' : 'azan_$soundId';
 
     final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'adhan_channel_scheduled_$soundFileName',
